@@ -32,4 +32,4 @@ parts:
       mkdir -p $CRAFT_PART_INSTALL/usr/share/applications
       mkdir -p $CRAFT_PART_INSTALL/usr/share/icons/hicolor/scalable/apps
       cp porkill.desktop $CRAFT_PART_INSTALL/usr/share/applications/
-      cp logo.svg $Craft_PART_INSTALL/usr/share/icons/hicolor/scalable/apps/porkill.svg
+      cp logo.svg $CRAFT_PART_INSTALL/usr/share/icons/hicolor/scalable/apps/porkill.svg

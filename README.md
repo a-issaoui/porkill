@@ -52,10 +52,10 @@ The most professional way to install on Debian/Ubuntu or Fedora/RedHat. Download
 
 ```bash
 # Ubuntu / Debian / Mint
-sudo apt install ./porkill_1.0.3_amd64.deb
+sudo apt install ./porkill_1.0.4_amd64.deb
 
 # Fedora / RHEL / CentOS
-sudo dnf install ./porkill-1.0.3-1.x86_64.rpm
+sudo dnf install ./porkill-1.0.4-1.x86_64.rpm
 ```
 
 ### Option B — Snap Store
@@ -79,9 +79,9 @@ flatpak-builder --user --install --force-clean build-dir com.github.a_issaoui.po
 Download the latest release and run:
 
 ```bash
-wget https://github.com/a-issaoui/porkill/releases/latest/download/porkill-v1.0.3-x86_64.AppImage
-chmod +x porkill-v1.0.3-x86_64.AppImage
-./porkill-v1.0.3-x86_64.AppImage
+wget https://github.com/a-issaoui/porkill/releases/latest/download/porkill-v1.0.4-x86_64.AppImage
+chmod +x porkill-v1.0.4-x86_64.AppImage
+./porkill-v1.0.4-x86_64.AppImage
 ```
 
 ### Option E — Run directly from source
