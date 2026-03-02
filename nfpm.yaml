@@ -20,7 +20,7 @@ contents:
       mode: 0755
   - src: "porkill.desktop"
     dst: "/usr/share/applications/porkill.desktop"
-  - src: "logo.svg"
+  - src: "assets/porkill.svg"
     dst: "/usr/share/icons/hicolor/scalable/apps/porkill.svg"
   - src: "porkill.png"
     dst: "/usr/share/icons/hicolor/256x256/apps/porkill.png"

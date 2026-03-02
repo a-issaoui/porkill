@@ -22,7 +22,7 @@ modules:
     build-commands:
       - install -D porkill.py /app/bin/porkill
       - install -D porkill.desktop /app/share/applications/com.github.a_issaoui.porkill.desktop
-      - install -D logo.svg /app/share/icons/hicolor/scalable/apps/com.github.a_issaoui.porkill.svg
+      - install -D assets/porkill.svg /app/share/icons/hicolor/scalable/apps/com.github.a_issaoui.porkill.svg
       - install -D porkill.png /app/share/icons/hicolor/256x256/apps/porkill.png
       - install -D com.github.a_issaoui.porkill.metainfo.xml /app/share/metainfo/com.github.a_issaoui.porkill.metainfo.xml
     sources:
