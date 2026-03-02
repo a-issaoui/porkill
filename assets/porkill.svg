@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <rect width="256" height="256" rx="32" fill="#080c08"/>
+  <!-- Circuit/network lines -->
+  <line x1="40" y1="128" x2="216" y2="128" stroke="#1e361e" stroke-width="2"/>
+  <line x1="128" y1="40" x2="128" y2="216" stroke="#1e361e" stroke-width="2"/>
+  <!-- Neon ring -->
+  <circle cx="128" cy="128" r="80" fill="none" stroke="#39ff14" stroke-width="3" opacity="0.8"/>
+  <circle cx="128" cy="128" r="80" fill="none" stroke="#39ff14" stroke-width="8" opacity="0.15"/>
+  <!-- Kill X symbol -->
+  <line x1="92" y1="92" x2="164" y2="164" stroke="#ff2a2a" stroke-width="10" stroke-linecap="round"/>
+  <line x1="164" y1="92" x2="92" y2="164" stroke="#ff2a2a" stroke-width="10" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="128" cy="128" r="8" fill="#39ff14"/>
+  <!-- Port dots -->
+  <circle cx="128" cy="48"  r="5" fill="#39ff14" opacity="0.7"/>
+  <circle cx="128" cy="208" r="5" fill="#39ff14" opacity="0.7"/>
+  <circle cx="48"  cy="128" r="5" fill="#39ff14" opacity="0.7"/>
+  <circle cx="208" cy="128" r="5" fill="#39ff14" opacity="0.7"/>
+</svg>

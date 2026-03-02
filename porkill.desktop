@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=porkill
+Comment=Process & Port Monitor / Killer
+Exec=porkill
+Icon=porkill
+Type=Application
+Categories=System;
+Keywords=port;process;kill;monitor;network;
+Terminal=false
+StartupNotify=true

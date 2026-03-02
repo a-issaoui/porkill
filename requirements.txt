@@ -1,0 +1,2 @@
+# porkill has no third-party dependencies.
+# It uses only Python stdlib: tkinter, subprocess, threading, signal, socket, struct, pathlib, re, os

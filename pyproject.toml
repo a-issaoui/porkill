@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "porkill"
+version = "1.0.0"
+authors = [
+  { name="a-issaoui", email="your-email@example.com" },
+]
+description = "A cyberpunk-themed GUI for monitoring and killing processes by port"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Environment :: X11 Applications",
+    "Topic :: System :: Networking :: Monitoring",
+]
+dependencies = []
+
+[project.urls]
+"Homepage" = "https://github.com/a-issaoui/porkill"
+"Bug Tracker" = "https://github.com/a-issaoui/porkill/issues"
+
+[project.scripts]
+porkill = "porkill:main"
+
+[tool.setuptools]
+py-modules = ["porkill"]
