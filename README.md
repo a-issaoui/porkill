@@ -1,8 +1,11 @@
 <div align="center">
+  <img src="assets/logo.svg" width="740" alt="porkill logo">
 
-<img src="assets/logo.svg" alt="porkill logo" width="740"/>
+  <br>
 
-**Process & Port Monitor // Kill with Precision**
+  **Process & Port Monitor // Kill with Precision**
+
+  <br>
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-39ff14?style=flat-square&logo=python&logoColor=white&labelColor=080c08)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/Platform-Linux-39ff14?style=flat-square&logo=linux&logoColor=white&labelColor=080c08)](https://kernel.org/)
