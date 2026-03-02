@@ -45,11 +45,28 @@ jobs:
           chmod +x build.sh
           ./build.sh ${{ github.ref_name }}
 
+      - name: Install nfpm
+        run: |
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Build Native Packages (.deb, .rpm)
+        env:
+          ARCH: ${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          # The VERSION and ARCH env vars are used in nfpm.yaml
+          VERSION=${VERSION#v} nfpm pkg --packager deb --target .
+          VERSION=${VERSION#v} nfpm pkg --packager rpm --target .
+
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: porkill-*.AppImage
+          files: |
+            porkill-*.AppImage
+            porkill_*.deb
+            porkill-*.rpm
           generate_release_notes: true
           draft: false
           prerelease: false
