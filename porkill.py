@@ -957,7 +957,7 @@ class Porkill(tk.Tk):
     }
 
     def __init__(self, config: Optional[argparse.Namespace] = None) -> None:
-        super().__init__()
+        super().__init__(className="porkill")
 
         # Apply configuration
         if config:
@@ -976,6 +976,7 @@ class Porkill(tk.Tk):
         self.minsize(900, 600)
 
         # Try to load and set window icon
+        self._icon = None  # Prevent GC
         icon_paths = [
             os.path.join(os.path.dirname(__file__), "porkill.png"),
             "/usr/share/icons/hicolor/256x256/apps/porkill.png",
@@ -984,8 +985,8 @@ class Porkill(tk.Tk):
         for ip in icon_paths:
             if os.path.exists(ip):
                 try:
-                    img = tk.PhotoImage(file=ip)
-                    self.iconphoto(True, img)
+                    self._icon = tk.PhotoImage(file=ip)
+                    self.iconphoto(True, self._icon)
                     break
                 except Exception:
                     continue

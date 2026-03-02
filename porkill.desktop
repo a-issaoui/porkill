@@ -8,3 +8,4 @@ Categories=System;
 Keywords=port;process;kill;monitor;network;
 Terminal=false
 StartupNotify=true
+StartupWMClass=porkill
