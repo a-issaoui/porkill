@@ -975,6 +975,21 @@ class Porkill(tk.Tk):
         self.configure(bg=Config.BG)
         self.minsize(900, 600)
 
+        # Try to load and set window icon
+        icon_paths = [
+            os.path.join(os.path.dirname(__file__), "porkill.png"),
+            "/usr/share/icons/hicolor/256x256/apps/porkill.png",
+            "/usr/local/share/icons/hicolor/256x256/apps/porkill.png",
+        ]
+        for ip in icon_paths:
+            if os.path.exists(ip):
+                try:
+                    img = tk.PhotoImage(file=ip)
+                    self.iconphoto(True, img)
+                    break
+                except Exception:
+                    continue
+
         # Center window on screen
         self.update_idletasks()
         width, height = 1100, 740

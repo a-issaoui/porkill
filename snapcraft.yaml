@@ -1,6 +1,6 @@
 name: porkill
 base: core22
-version: '1.0.5'
+version: '1.0.6'
 summary: A cyberpunk-themed GUI for monitoring and killing processes by port.
 description: |
   Porkill is a Linux desktop application for visualising every open network port
@@ -33,3 +33,4 @@ parts:
       mkdir -p $CRAFT_PART_INSTALL/usr/share/icons/hicolor/scalable/apps
       cp porkill.desktop $CRAFT_PART_INSTALL/usr/share/applications/
       cp logo.svg $CRAFT_PART_INSTALL/usr/share/icons/hicolor/scalable/apps/porkill.svg
+      cp porkill.png $CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps/porkill.png

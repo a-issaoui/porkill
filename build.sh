@@ -97,7 +97,7 @@ chmod +x "${APPDIR_WORK}/AppRun"
 
 # ── Also ensure entrypoint.py and porkill.py are inside the AppDir ─────────────
 echo "==> Copying application files into AppDir..."
-cp entrypoint.py porkill.py "${APPDIR_WORK}/"
+cp entrypoint.py porkill.py porkill.png "${APPDIR_WORK}/"
 
 # ── Repack the patched AppDir into a new AppImage ─────────────────────────────
 echo "==> Repacking AppImage..."
