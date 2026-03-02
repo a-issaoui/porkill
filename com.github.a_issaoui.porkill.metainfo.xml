@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.github.a_issaoui.porkill</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Porkill</name>
+  <summary>A cyberpunk-themed GUI for monitoring and killing processes by port</summary>
+  <description>
+    <p>
+      Porkill is a Linux desktop application for visualising every open network port alongside the process that owns it — and killing it with one click.
+      It reads directly from /proc/net/ with no external tools required, though it falls back to ss or netstat when available.
+      The UI is built with tkinter and styled in a neon cyberpunk aesthetic with a live matrix-rain animation header.
+    </p>
+  </description>
+  <launchable type="desktop-id">com.github.a_issaoui.porkill.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Main Interface</caption>
+      <image>https://raw.githubusercontent.com/a-issaoui/porkill/master/logo.svg</image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://github.com/a-issaoui/porkill</url>
+  <developer_name>a-issaoui</developer_name>
+</component>

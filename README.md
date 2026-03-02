@@ -46,33 +46,53 @@ No pip packages. No Electron. No telemetry. Just Python stdlib.
 
 ## Installation
 
-### Option A — AppImage (recommended, no install needed)
+### Option A — Native Packages (.deb / .rpm)
+
+The most professional way to install on Debian/Ubuntu or Fedora/RedHat. Download from [Releases](https://github.com/a-issaoui/porkill/releases/latest):
+
+```bash
+# Ubuntu / Debian / Mint
+sudo apt install ./porkill_1.0.3_amd64.deb
+
+# Fedora / RHEL / CentOS
+sudo dnf install ./porkill-1.0.3-1.x86_64.rpm
+```
+
+### Option B — Snap Store
+
+Instant install on Ubuntu and any distro with `snapd`:
+
+```bash
+sudo snap install porkill
+```
+
+### Option C — Flathub (Flatpak)
+
+Coming soon to Flathub! You can build it locally using the provided manifest:
+
+```bash
+flatpak-builder --user --install --force-clean build-dir com.github.a_issaoui.porkill.yml
+```
+
+### Option D — AppImage (no install needed)
 
 Download the latest release and run:
 
 ```bash
-wget https://github.com/a-issaoui/porkill/releases/latest/download/porkill-x86_64.AppImage
-chmod +x porkill-x86_64.AppImage
-sudo ./porkill-x86_64.AppImage
+wget https://github.com/a-issaoui/porkill/releases/latest/download/porkill-v1.0.3-x86_64.AppImage
+chmod +x porkill-v1.0.3-x86_64.AppImage
+./porkill-v1.0.3-x86_64.AppImage
 ```
 
-To install system-wide:
-
-```bash
-sudo cp porkill-x86_64.AppImage /usr/local/bin/porkill
-sudo chmod +x /usr/local/bin/porkill
-porkill   # available everywhere
-```
-
-### Option B — Run directly from source
+### Option E — Run directly from source
 
 ```bash
 git clone https://github.com/a-issaoui/porkill.git
 cd porkill
-sudo python3 porkill.py
+python3 porkill.py
 ```
 
-**Prerequisites** — only `python3-tk` (tkinter):
+**Prerequisites** (only for source/AppImage manual runs) — `python3-tk`:
 
 | Distro | Command |
 |---|---|
@@ -80,10 +100,8 @@ sudo python3 porkill.py
 | Fedora / RHEL | `sudo dnf install python3-tkinter` |
 | Arch Linux | `sudo pacman -S tk` |
 | openSUSE | `sudo zypper install python3-tk` |
-| Alpine | `sudo apk add python3-tkinter` |
-| Gentoo | `USE=tk emerge dev-lang/python` |
 
-> **Why sudo?** Reading `/proc/net/` works without root, but sending signals to privileged processes requires it. Run without sudo to view all ports; kills on system processes will fall back to `sudo -n` internally.
+> **Security Note:** Reading `/proc/net/` works without root, but sending signals to privileged processes requires it. Native packages handle this gracefully via internal escalation.
 
 ---
 

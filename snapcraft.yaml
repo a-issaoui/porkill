@@ -1,0 +1,35 @@
+name: porkill
+base: core22
+version: '1.0.3'
+summary: A cyberpunk-themed GUI for monitoring and killing processes by port.
+description: |
+  Porkill is a Linux desktop application for visualising every open network port
+  alongside the process that owns it — and killing it with one click.
+  It features a neon cyberpunk aesthetic with a live matrix-rain animation header.
+
+grade: stable
+confinement: strict
+
+apps:
+  porkill:
+    command: bin/porkill
+    desktop: usr/share/applications/porkill.desktop
+    extensions: [gnome]
+    plugs:
+      - network
+      - network-observe
+      - system-observe
+      - process-control
+
+parts:
+  porkill:
+    plugin: python
+    source: .
+    stage-packages:
+      - python3-tk
+    override-build: |
+      craftctl default
+      mkdir -p $CRAFT_PART_INSTALL/usr/share/applications
+      mkdir -p $CRAFT_PART_INSTALL/usr/share/icons/hicolor/scalable/apps
+      cp porkill.desktop $CRAFT_PART_INSTALL/usr/share/applications/
+      cp logo.svg $Craft_PART_INSTALL/usr/share/icons/hicolor/scalable/apps/porkill.svg

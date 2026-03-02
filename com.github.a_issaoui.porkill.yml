@@ -1,0 +1,29 @@
+id: com.github.a_issaoui.porkill
+runtime: org.gnome.Platform
+runtime-version: '45'
+sdk: org.gnome.Sdk
+command: porkill
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=x11
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=all
+  - --allow=multiarch
+  - --talk-name=org.freedesktop.Notifications
+  # Access to /proc/net/ and killing processes
+  - --filesystem=host-os:ro
+  - --talk-name=org.freedesktop.Flatpak
+
+modules:
+  - name: porkill
+    buildsystem: simple
+    build-commands:
+      - install -D porkill.py /app/bin/porkill
+      - install -D porkill.desktop /app/share/applications/com.github.a_issaoui.porkill.desktop
+      - install -D logo.svg /app/share/icons/hicolor/scalable/apps/com.github.a_issaoui.porkill.svg
+      - install -D com.github.a_issaoui.porkill.metainfo.xml /app/share/metainfo/com.github.a_issaoui.porkill.metainfo.xml
+    sources:
+      - type: dir
+        path: .

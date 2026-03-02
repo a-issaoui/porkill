@@ -55,9 +55,13 @@ jobs:
           ARCH: ${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}
           VERSION: ${{ github.ref_name }}
         run: |
-          # The VERSION and ARCH env vars are used in nfpm.yaml
           VERSION=${VERSION#v} nfpm pkg --packager deb --target .
           VERSION=${VERSION#v} nfpm pkg --packager rpm --target .
+
+      - name: Build Snap
+        uses: snapcore/action-build@v1
+        with:
+          path: .
 
       - name: Release
         uses: softprops/action-gh-release@v2
@@ -67,6 +71,9 @@ jobs:
             porkill-*.AppImage
             porkill_*.deb
             porkill-*.rpm
+            *.snap
+            com.github.a_issaoui.porkill.yml
+            com.github.a_issaoui.porkill.metainfo.xml
           generate_release_notes: true
           draft: false
           prerelease: false
