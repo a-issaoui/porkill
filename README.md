@@ -184,11 +184,11 @@ porkill/
 
 ---
 
-## Notes
+## Compatibility Notes
 
-- **Wayland** — porkill uses tkinter (X11). On Wayland, XWayland must be running, or set `GDK_BACKEND=x11` before launching.
-- **ARM** — the default build targets `x86_64`. Add an `aarch64` runner in the GitHub Actions workflow for ARM builds.
-- **AppImage size** — ~17 MB compressed. It bundles a full CPython runtime so no Python installation is required on the target machine.
+- **Wayland** — `porkill` uses `tkinter` (X11). On Wayland, XWayland must be running, or set `GDK_BACKEND=x11` before launching.
+- **ARM** — Multi-arch builds are supported. The GitHub Actions workflow automatically builds both `x86_64` and `aarch64` AppImages on every release.
+- **Sudo** — Reading `/proc/net/` works without root, but sending signals to privileged processes requires it. Run without sudo to view all ports; kills on system processes will fall back to `sudo -n` internally.
 
 ---
 
@@ -199,5 +199,5 @@ Built by [a-issaoui](https://github.com/a-issaoui)
 ---
 
 <div align="center">
-<sub>[ Process & Port Monitor // Kill with Precision ]</sub>
+  <sub>[ Process & Port Monitor // Kill with Precision ]</sub>
 </div>

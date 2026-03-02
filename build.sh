@@ -6,7 +6,7 @@
 set -euo pipefail
 
 VERSION="${1:-v1.0.0}"
-ARCH=$(uname -m)
+ARCH="${ARCH:-$(uname -m)}"
 OUTPUT="porkill-${VERSION}-${ARCH}.AppImage"
 APPDIR_WORK="porkill.AppDir"
 
