@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logo.svg" width="740" alt="porkill logo">
+  <img src="logo.svg" width="740" alt="porkill logo">
 
   <br>
 
