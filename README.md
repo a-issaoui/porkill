@@ -46,19 +46,35 @@ No pip packages. No Electron. No telemetry. Just Python stdlib.
 
 ## Installation
 
-### Option A — Native Packages (.deb / .rpm)
+### Option A — One-Command Repository Setup (Professional)
 
-The most professional way to install on Debian/Ubuntu or Fedora/RedHat. Download from [Releases](https://github.com/a-issaoui/porkill/releases/latest):
+The recommended way for seamless `apt` or `dnf` updates. Run one command to add the **Cloudsmith** repository, then install normally:
+
+#### Debian / Ubuntu / Mint
+```bash
+curl -1sLf 'https://dl.cloudsmith.io/public/a-issaoui/porkill/setup.deb.sh' | sudo -E bash
+sudo apt install porkill
+```
+
+#### Fedora / RHEL / CentOS / AlmaLinux
+```bash
+curl -1sLf 'https://dl.cloudsmith.io/public/a-issaoui/porkill/setup.rpm.sh' | sudo -E bash
+sudo dnf install porkill
+```
+
+### Option B — Manual Native Packages (.deb / .rpm)
+
+Download from [Releases](https://github.com/a-issaoui/porkill/releases/latest):
 
 ```bash
 # Ubuntu / Debian / Mint
-sudo apt install ./porkill_1.0.4_amd64.deb
+sudo apt install ./porkill_1.0.5_amd64.deb
 
 # Fedora / RHEL / CentOS
-sudo dnf install ./porkill-1.0.4-1.x86_64.rpm
+sudo dnf install ./porkill-1.0.5-1.x86_64.rpm
 ```
 
-### Option B — Snap Store
+### Option C — Snap Store
 
 Instant install on Ubuntu and any distro with `snapd`:
 
@@ -66,7 +82,7 @@ Instant install on Ubuntu and any distro with `snapd`:
 sudo snap install porkill
 ```
 
-### Option C — Flathub (Flatpak)
+### Option D — Flathub (Flatpak)
 
 Coming soon to Flathub! You can build it locally using the provided manifest:
 
@@ -74,17 +90,17 @@ Coming soon to Flathub! You can build it locally using the provided manifest:
 flatpak-builder --user --install --force-clean build-dir com.github.a_issaoui.porkill.yml
 ```
 
-### Option D — AppImage (no install needed)
+### Option E — AppImage (no install needed)
 
 Download the latest release and run:
 
 ```bash
-wget https://github.com/a-issaoui/porkill/releases/latest/download/porkill-v1.0.4-x86_64.AppImage
-chmod +x porkill-v1.0.4-x86_64.AppImage
-./porkill-v1.0.4-x86_64.AppImage
+wget https://github.com/a-issaoui/porkill/releases/latest/download/porkill-v1.0.5-x86_64.AppImage
+chmod +x porkill-v1.0.5-x86_64.AppImage
+./porkill-v1.0.5-x86_64.AppImage
 ```
 
-### Option E — Run directly from source
+### Option F — Run directly from source
 
 ```bash
 git clone https://github.com/a-issaoui/porkill.git

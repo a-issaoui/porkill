@@ -58,6 +58,19 @@ jobs:
           VERSION=${VERSION#v} nfpm pkg --packager deb --target .
           VERSION=${VERSION#v} nfpm pkg --packager rpm --target .
 
+      - name: Install Cloudsmith CLI
+        run: |
+          pip install --upgrade cloudsmith-cli
+
+      - name: Push to Cloudsmith
+        env:
+          CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+        run: |
+          # Push Debian package
+          cloudsmith push deb a-issaoui/porkill/any-distro/any-version porkill_*.deb
+          # Push RPM package
+          cloudsmith push rpm a-issaoui/porkill/any-distro/any-version porkill-*.rpm
+
       - name: Build Snap
         uses: snapcore/action-build@v1
         with:
