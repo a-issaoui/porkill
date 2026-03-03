@@ -106,7 +106,7 @@ class Config:
     FLASH_DURATION_MS: int = 3_000
     INODE_CACHE_TTL: float = 2.0
     MAX_PARENT_TRAVERSAL: int = 6
-    ANIMATION_INTERVAL_MS: int = 60
+    ANIMATION_INTERVAL_MS: int = 40
 
     # Color scheme (cyberpunk dark)
     BG: str = "#080c08"
@@ -701,7 +701,7 @@ class LogoCanvas(tk.Canvas):
         self._after_id: Optional[str] = None
         self._destroyed = False
 
-        # Matrix rain columns: [x, y, speed, char_idx, trail_len]
+        # Matrix rain columns: [x, y, speed, char_idx]
         self._rain_cols: List[List[Any]] = []
         self._rain_initialized = False
 
@@ -725,9 +725,8 @@ class LogoCanvas(tk.Canvas):
             self._rain_cols.append([
                 x,
                 random.uniform(0, height),
-                random.uniform(0.15, 0.5), # Slower speed
+                random.uniform(0.4, 1.4),
                 random.randint(0, len(self._RAIN_CHARS) - 1),
-                random.randint(6, 14), # Trail length
             ])
         self._rain_initialized = True
 
@@ -753,32 +752,12 @@ class LogoCanvas(tk.Canvas):
     def _draw_matrix_rain(self, width: int, height: int) -> None:
         if not self._rain_initialized:
             self._init_rain(width, height)
-
-        char_h = 14
         for col in self._rain_cols:
-            x, y, _spd, ci, tlen = col
-
-            # Draw trail
-            for i in range(tlen):
-                char_y = (int(y) - i * char_h) % height
-
-                # Flicker effect for some characters
-                if random.random() > 0.98:
-                    char = random.choice(self._RAIN_CHARS)
-                else:
-                    char = self._RAIN_CHARS[(ci - i) % len(self._RAIN_CHARS)]
-
-                if i == 0:
-                    # Head character: bright and bold
-                    fill = Config.NEON_GLOW if random.random() > 0.1 else "#ffffff"
-                    font = ("Monospace", 9, "bold")
-                else:
-                    # Trail: fading green
-                    alpha = 1.0 - (i / tlen)
-                    fill = self._lerp_color("#051005", Config.NEON_DIM, alpha)
-                    font = ("Monospace", 8)
-
-                self.create_text(x, char_y, text=char, font=font, fill=fill, anchor="nw")
+            x, y, _spd, ci = col
+            char = self._RAIN_CHARS[ci % len(self._RAIN_CHARS)]
+            fill = Config.NEON_DIM if random.random() > 0.7 else "#0a2a0a"
+            self.create_text(x, int(y) % height, text=char,
+                             font=("Monospace", 8), fill=fill, anchor="nw")
 
     def _draw_logo(self, width: int, height: int, pulse: float) -> None:
         """Draw static 'PORKILL' text with glow shadow."""
@@ -869,15 +848,12 @@ class LogoCanvas(tk.Canvas):
 
             if self._rain_initialized:
                 for col in self._rain_cols:
-                    col[1] += col[2] * 4.0 # Vertical movement
-                    if col[1] > (self.winfo_height() or 190) + 100:
-                        col[1] = random.uniform(-100, 0)
+                    col[1] += col[2] * 2.0
+                    if col[1] > (self.winfo_height() or 190):
+                        col[1] = random.uniform(-40, 0)
                         col[3] = random.randint(0, len(self._RAIN_CHARS) - 1)
-                        col[4] = random.randint(6, 14)
                     else:
-                        # Character change frequency
-                        if random.random() > 0.85:
-                            col[3] = (col[3] + 1) % len(self._RAIN_CHARS)
+                        col[3] = (col[3] + 1) % len(self._RAIN_CHARS)
 
             self._draw()
 
