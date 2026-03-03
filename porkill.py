@@ -7,10 +7,10 @@ Usage:
     sudo python3 porkill.py [options]
 
 Options:
-    --interval SECONDS    Auto-refresh interval (default: 5, min: 2, max: 120)
+    --interval SECONDS    Auto-refresh interval (default: 2, min: 2, max: 120)
     --max-rows N          Maximum rows to display (default: 10000)
     --no-auto-refresh     Disable auto-refresh on startup
-    --log-level LEVEL     Logging level: DEBUG, INFO, WARNING, ERROR (default: INFO)
+    --log-level LEVEL     Logging level: DEBUG, INFO, WARNING, ERROR (default: WARNING)
 """
 
 from __future__ import annotations
@@ -1817,7 +1817,7 @@ class ElevationDialog(tk.Tk):
         super().__init__()
         self.result = False
         self.title("Porkill - Privilege Elevation")
-        self.geometry("420x200") # Slightly larger for longer text
+        self.geometry("420x200")
         self.resizable(False, False)
         self.configure(bg=Config.BG)
 
@@ -1836,16 +1836,13 @@ class ElevationDialog(tk.Tk):
         # Header
         try:
             h_font = ("Fixedsys", 14, "bold")
-            # Minimal check if font exists by attempting to measure it
-            # (tk.font is better but we don't want more imports right now)
-            tk.Label(self, font=h_font).winfo_reqwidth()
+            tk.Label(self, font=h_font).winfo_reqwidth()  # test existence
         except Exception:
             h_font = ("Monospace", 14, "bold")
 
         title_label = tk.Label(
             container, text="⌬ PRIVILEGE ELEVATION",
-            fg=Config.NEON, bg=Config.BG,
-            font=h_font
+            fg=Config.NEON, bg=Config.BG, font=h_font
         )
         title_label.pack(pady=(0, 10))
 
@@ -1860,24 +1857,25 @@ class ElevationDialog(tk.Tk):
         btn_frame = tk.Frame(container, bg=Config.BG)
         btn_frame.pack()
 
-        style = {"font": ("Monospace", 9, "bold"), "width": 16, "bd": 1, "relief": tk.FLAT,
-                 "takefocus": 1, "highlightthickness": 2}
-
-        yes_btn = tk.Button(
-            btn_frame, text="[ YES - ELEVATED ]",
-            fg=Config.BG, bg=Config.NEON, activebackground=Config.NEON_GLOW,
-            highlightcolor=Config.NEON_GLOW, highlightbackground=Config.BG,
-            command=self._on_yes, **style  # type: ignore
+        # Create custom-styled buttons
+        self.yes_btn = self._create_styled_button(
+            btn_frame, "[ YES - ELEVATED ]",
+            normal_bg=Config.NEON, normal_fg=Config.BG,
+            hover_bg=Config.NEON_GLOW, hover_fg=Config.BG,
+            focus_bg=Config.NEON_GLOW, focus_fg=Config.BG,
+            command=self._on_yes
         )
-        yes_btn.pack(side=tk.LEFT, padx=10)
+        self.yes_btn.pack(side=tk.LEFT, padx=10)
 
-        no_btn = tk.Button(
-            btn_frame, text="[ NO - LIMITED ]",
-            fg=Config.NEON, bg=Config.BG, activebackground=Config.BG3, activeforeground="#ffffff",
-            highlightcolor=Config.NEON_GLOW, highlightbackground=Config.NEON,
-            command=self._on_no, **style  # type: ignore
+        self.no_btn = self._create_styled_button(
+            btn_frame, "[ NO - LIMITED ]",
+            normal_bg=Config.BG, normal_fg=Config.NEON,
+            hover_bg=Config.BG4, hover_fg=Config.NEON_GLOW,
+            focus_bg=Config.BG4, focus_fg=Config.NEON_GLOW,
+            command=self._on_no,
+            focus_highlight=Config.NEON_GLOW
         )
-        no_btn.pack(side=tk.LEFT, padx=10)
+        self.no_btn.pack(side=tk.LEFT, padx=10)
 
         # Keyboard bindings
         self.bind("<Return>", lambda _e: self.focus_get().invoke()  # type: ignore
@@ -1885,7 +1883,7 @@ class ElevationDialog(tk.Tk):
         self.bind("<Escape>", lambda _e: self._on_no())
 
         # Start with YES focused
-        yes_btn.focus_set()
+        self.yes_btn.focus_set()
 
         # Handle window close
         self.protocol("WM_DELETE_WINDOW", self._on_no)
@@ -1895,6 +1893,53 @@ class ElevationDialog(tk.Tk):
         self.attributes('-topmost', True)
         self.after_idle(self.attributes, '-topmost', False)
         self.focus_force()
+
+    def _create_styled_button(
+        self, parent: tk.Widget, text: str,
+        normal_bg: str, normal_fg: str,
+        hover_bg: str, hover_fg: str,
+        focus_bg: str, focus_fg: str,
+        command: Callable[[], None],
+        focus_highlight: Optional[str] = None,
+    ) -> tk.Button:
+        """Create a button with hover and focus effects."""
+        btn = tk.Button(
+            parent, text=text,
+            bg=normal_bg, fg=normal_fg,
+            activebackground=hover_bg, activeforeground=hover_fg,
+            relief=tk.FLAT, bd=1,
+            highlightthickness=2,
+            highlightcolor=focus_highlight or normal_fg,
+            highlightbackground=Config.BG,
+            font=("Monospace", 9, "bold"), width=16,
+            command=command
+        )
+
+        def on_enter(_e: Any) -> None:
+            if btn != btn.focus_get():
+                btn.config(bg=hover_bg, fg=hover_fg)
+
+        def on_leave(_e: Any) -> None:
+            if btn != btn.focus_get():
+                btn.config(bg=normal_bg, fg=normal_fg)
+
+        def on_focus_in(_e: Any) -> None:
+            btn.config(bg=focus_bg, fg=focus_fg,
+                       highlightcolor=focus_highlight or normal_fg)
+
+        def on_focus_out(e: Any) -> None:
+            if e.widget == btn:
+                if btn.winfo_containing(e.x_root, e.y_root) == btn:
+                    btn.config(bg=hover_bg, fg=hover_fg)
+                else:
+                    btn.config(bg=normal_bg, fg=normal_fg)
+
+        btn.bind("<Enter>", on_enter)
+        btn.bind("<Leave>", on_leave)
+        btn.bind("<FocusIn>", on_focus_in)
+        btn.bind("<FocusOut>", on_focus_out)
+
+        return btn
 
     def _on_yes(self) -> None:
         self.result = True
