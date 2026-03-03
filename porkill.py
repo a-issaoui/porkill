@@ -752,8 +752,8 @@ class LogoCanvas(tk.Canvas):
         for col in self._rain_cols:
             x, y, _spd, ci = col
             char = self._RAIN_CHARS[ci % len(self._RAIN_CHARS)]
-            # Single subtle layer — slightly visible, easy on the eyes
-            fill = "#102a10"
+            # Multi-layer: mostly dim, top layer a bit brighter
+            fill = "#143814" if random.random() > 0.85 else "#0c1e0c"
             self.create_text(x, int(y) % height, text=char,
                              font=("Monospace", 8), fill=fill, anchor="nw")
 
