@@ -1783,13 +1783,13 @@ Keyboard Shortcuts:
     parser.add_argument(
         "--log-level", "-l",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        default="INFO", # Changed default to INFO
+        default="WARNING", # Changed default to INFO
         help="Logging level (default: INFO)"
     )
     parser.add_argument(
         "--no-animation",
         action="store_true",
-        help="Disable the matrix rain background animation to save CPU"
+        help="Disable the background animation to save CPU"
     )
     parser.add_argument(
         "--version", "-v",
@@ -1848,24 +1848,34 @@ class ElevationDialog(tk.Tk):
         btn_frame = tk.Frame(container, bg=Config.BG)
         btn_frame.pack()
 
-        style = {"font": ("Monospace", 9, "bold"), "width": 16, "bd": 1, "relief": tk.FLAT}
+        style = {"font": ("Monospace", 9, "bold"), "width": 16, "bd": 1, "relief": tk.FLAT,
+                 "takefocus": 1, "highlightthickness": 2}
 
         yes_btn = tk.Button(
             btn_frame, text="[ YES - ELEVATED ]",
             fg=Config.BG, bg=Config.NEON, activebackground=Config.NEON_GLOW,
-            command=self._on_yes, **style # type: ignore
+            highlightcolor=Config.NEON_GLOW, highlightbackground=Config.BG,
+            command=self._on_yes, **style  # type: ignore
         )
         yes_btn.pack(side=tk.LEFT, padx=10)
 
         no_btn = tk.Button(
             btn_frame, text="[ NO - LIMITED ]",
             fg=Config.NEON, bg=Config.BG, activebackground=Config.BG3,
-            highlightbackground=Config.NEON, highlightthickness=1,
-            command=self._on_no, **style # type: ignore
+            highlightcolor=Config.NEON_GLOW, highlightbackground=Config.NEON,
+            command=self._on_no, **style  # type: ignore
         )
         no_btn.pack(side=tk.LEFT, padx=10)
 
-        # Handle widow close
+        # Keyboard bindings
+        self.bind("<Return>", lambda _e: self.focus_get().invoke()  # type: ignore
+                  if hasattr(self.focus_get(), 'invoke') else None)
+        self.bind("<Escape>", lambda _e: self._on_no())
+
+        # Start with YES focused
+        yes_btn.focus_set()
+
+        # Handle window close
         self.protocol("WM_DELETE_WINDOW", self._on_no)
 
         # Force visibility
