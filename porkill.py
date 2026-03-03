@@ -94,7 +94,7 @@ def get_version() -> str:
     except Exception:
         pass
 
-    return "2.0.2"  # Hardcoded fallback for v2.0.2 release
+    return "2.0.3"  # Hardcoded fallback for v2.0.3 release
 
 VERSION = get_version()
 
@@ -698,7 +698,8 @@ class LogoCanvas(tk.Canvas):
         self._after_id: Optional[str] = None
         self._destroyed = False
 
-        # Matrix rain columns: [x, y, speed, char_idx]
+        # Matrix rain columns: [x, y, speed, char_idx, layer_idx]
+        # layers: 0=Far (slow/dim), 1=Mid, 2=Near (fast/brighter)
         self._rain_cols: List[List[Any]] = []
         self._rain_initialized = False
 
@@ -718,12 +719,21 @@ class LogoCanvas(tk.Canvas):
 
     def _init_rain(self, width: int, height: int) -> None:
         self._rain_cols = []
+        # Layer configs: (speed_range, trail_len, brightness_weight)
+        layers = [
+            ((0.2, 0.4), 2, 0.3), # Far
+            ((0.5, 0.8), 3, 0.6), # Mid
+            ((1.0, 1.4), 5, 1.0), # Near
+        ]
         for x in range(0, width, 14):
+            l_idx = random.choices([0, 1, 2], weights=[0.5, 0.3, 0.2])[0]
+            spd_range, _tlen, _bw = layers[l_idx]
             self._rain_cols.append([
                 x,
                 random.uniform(0, height),
-                random.uniform(0.2, 0.6),
+                random.uniform(*spd_range),
                 random.randint(0, len(self._RAIN_CHARS) - 1),
+                l_idx
             ])
         self._rain_initialized = True
 
@@ -749,13 +759,31 @@ class LogoCanvas(tk.Canvas):
     def _draw_matrix_rain(self, width: int, height: int) -> None:
         if not self._rain_initialized:
             self._init_rain(width, height)
+
+        # Layer colors (dim to slightly visible)
+        # Far: #081208, Mid: #0c1e0c, Near: #143814
+        layer_colors = ["#081208", "#0c1e0c", "#143814"]
+        layer_trails = [2, 3, 5]
+        char_h = 14
+
         for col in self._rain_cols:
-            x, y, _spd, ci = col
-            char = self._RAIN_CHARS[ci % len(self._RAIN_CHARS)]
-            # Multi-layer: mostly dim, top layer a bit brighter
-            fill = "#143814" if random.random() > 0.85 else "#0c1e0c"
-            self.create_text(x, int(y) % height, text=char,
-                             font=("Monospace", 8), fill=fill, anchor="nw")
+            x, y, _spd, ci, l_idx = col
+            tlen = layer_trails[l_idx]
+            base_color = layer_colors[l_idx]
+
+            for i in range(tlen):
+                char_y = (int(y) - i * char_h) % height
+                char = self._RAIN_CHARS[(ci - i) % len(self._RAIN_CHARS)]
+
+                # Fade trail
+                if i == 0:
+                    fill = base_color
+                else:
+                    alpha = 1.0 - (i / tlen)
+                    fill = self._lerp_color(Config.BG, base_color, alpha * 0.6)
+
+                self.create_text(x, char_y, text=char,
+                                 font=("Monospace", 8), fill=fill, anchor="nw")
 
     def _draw_logo(self, width: int, height: int, pulse: float) -> None:
         """Draw static 'PORKILL' text with glow shadow."""
@@ -847,11 +875,13 @@ class LogoCanvas(tk.Canvas):
             if self._rain_initialized:
                 for col in self._rain_cols:
                     col[1] += col[2] * 2.0
-                    if col[1] > (self.winfo_height() or 190):
+                    if col[1] > (self.winfo_height() or 190) + 100:
                         col[1] = random.uniform(-40, 0)
                         col[3] = random.randint(0, len(self._RAIN_CHARS) - 1)
                     else:
-                        col[3] = (col[3] + 1) % len(self._RAIN_CHARS)
+                        # Character change frequency scales with layer speed
+                        if random.random() > (0.9 - col[4] * 0.1):
+                            col[3] = (col[3] + 1) % len(self._RAIN_CHARS)
 
             self._draw()
 
