@@ -1151,10 +1151,10 @@ class Porkill(tk.Tk):
 
     @staticmethod
     def _validate_interval(value: str) -> bool:
-        """Validate spinbox input is numeric."""
+        """Validate spinbox input is numeric and within range."""
         if value == "":
-            return True
-        return value.isdigit() and 0 < int(value) <= 120
+            return True  # Allow empty while typing
+        return value.isdigit() and 1 <= int(value) <= 120
 
     def _build_filter_bar(self) -> None:
         """Build the filter input bar."""
@@ -1614,10 +1614,10 @@ class Porkill(tk.Tk):
             self._info_var.set("-- error reading selection --")
 
     def _kill(self, sig: signal.Signals) -> None:
-        """Send signal to selected process, escalating to sudo if needed."""
+        """Send signal to selected process(es), escalating to sudo if needed."""
         # Ensure we're on the main thread
         if threading.current_thread() is not threading.main_thread():
-            self.after(0, lambda: self._kill(sig)) # type: ignore
+            self.after(0, lambda: self._kill(sig))  # type: ignore
             return
 
         if not self.winfo_exists():
@@ -1628,50 +1628,77 @@ class Porkill(tk.Tk):
             self._flash_status("SELECT A PROCESS FIRST")
             return
 
-        is_group = sel[0].startswith("grp:")
+        target_iid = sel[0]
+        is_group = target_iid.startswith("grp:")
+        pids_to_kill: List[str] = []
+        display_name = ""
 
-        try:
-            vals = self.tree.item(sel[0], "values")
-            pid, name, _proto, _addr, port, _state = vals
-        except (ValueError, tk.TclError):
-            self._flash_status("ERROR READING SELECTION")
-            return
+        if is_group:
+            display_name = target_iid[4:]  # Extract group name
+            children = self.tree.get_children(target_iid)
+            for child_id in children:
+                vals = self.tree.item(child_id, "values")
+                if vals and vals[0] and vals[0] not in ("—", ""):
+                    pids_to_kill.append(vals[0])
+            # Unique PIDs
+            pids_to_kill = list(dict.fromkeys(pids_to_kill))
+        else:
+            try:
+                vals = self.tree.item(target_iid, "values")
+                pid, name, _proto, _addr, _port, _state = vals
+                if pid and pid not in ("—", ""):
+                    pids_to_kill = [pid]
+                    display_name = name
+            except (ValueError, tk.TclError):
+                self._flash_status("ERROR READING SELECTION")
+                return
 
-        if not pid or pid == "\u2014":
+        if not pids_to_kill:
             messagebox.showwarning(
-                "porkill", "No PID — kernel entry, cannot kill."
+                "porkill", "No valid PIDs found for this entry (kernel/missing)."
             )
             return
 
         sig_label = "SIGKILL -9 (force)" if sig == signal.SIGKILL else "SIGTERM (graceful)"
-        if is_group:
+
+        if is_group and len(pids_to_kill) > 1:
             msg = (
-                f"Send  {sig_label}  to entire process group:\n\n"
-                f"   Process : {name}\n"
-                f"   PID     : {pid}\n\n"
-                "This will kill the parent and all its ports.\nConfirm?"
+                f"Send  {sig_label}  to {len(pids_to_kill)} processes in group:\n\n"
+                f"   Group : {display_name}\n"
+                f"   PIDs  : {', '.join(pids_to_kill[:5])}{'...' if len(pids_to_kill) > 5 else ''}\n\n"
+                "This will kill the entire group and all associated ports.\nConfirm?"
             )
         else:
+            pid = pids_to_kill[0]
             msg = (
                 f"Send  {sig_label}  to:\n\n"
-                f"   Process : {name}\n"
-                f"   PID     : {pid}\n"
-                f"   Port    : {port}\n\n"
+                f"   Process : {display_name}\n"
+                f"   PID     : {pid}\n\n"
                 "Confirm?"
             )
 
         if not messagebox.askyesno("porkill // confirm kill", msg, icon="warning"):
             return
 
-        ok, err = send_signal_to_pid(pid, sig)
-        if ok:
-            self._flash_status(f"KILLED PID {pid} ({name}) ✓")
-            self.after(900, self._schedule_refresh) # type: ignore
-        else:
-            self._flash_status(f"FAILED: {err}")
+        success_count = 0
+        errors = []
+        for pid_to_kill in pids_to_kill:
+            ok, err = send_signal_to_pid(pid_to_kill, sig)
+            if ok:
+                success_count += 1
+            else:
+                errors.append(f"PID {pid_to_kill}: {err}")
+
+        if success_count > 0:
+            self._flash_status(f"KILLED {success_count} PROCESS(ES) ✓")
+            self.after(900, self._schedule_refresh)  # type: ignore
+
+        if errors:
+            self._flash_status(f"FAILED: {len(errors)} ERROR(S)")
+            err_msg = "\n".join(errors[:5]) + ("\n..." if len(errors) > 5 else "")
             messagebox.showerror(
-                "porkill // kill failed",
-                f"Could not kill PID {pid}:\n{err}\n\nTry running with sudo.",
+                "porkill // kill issues",
+                f"Encountered errors while killing processes:\n\n{err_msg}\n\nTry running with sudo."
             )
 
     def _flash_status(self, msg: str) -> None:
