@@ -722,7 +722,7 @@ class LogoCanvas(tk.Canvas):
             self._rain_cols.append([
                 x,
                 random.uniform(0, height),
-                random.uniform(0.4, 1.4),
+                random.uniform(0.2, 0.6),
                 random.randint(0, len(self._RAIN_CHARS) - 1),
             ])
         self._rain_initialized = True
@@ -752,8 +752,8 @@ class LogoCanvas(tk.Canvas):
         for col in self._rain_cols:
             x, y, _spd, ci = col
             char = self._RAIN_CHARS[ci % len(self._RAIN_CHARS)]
-            # Very subtle: barely above the background for an ambient feel
-            fill = "#0d1f0d" if random.random() > 0.85 else "#091209"
+            # Single subtle layer — slightly visible, easy on the eyes
+            fill = "#102a10"
             self.create_text(x, int(y) % height, text=char,
                              font=("Monospace", 8), fill=fill, anchor="nw")
 
