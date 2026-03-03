@@ -1878,8 +1878,7 @@ class ElevationDialog(tk.Tk):
         self.no_btn.pack(side=tk.LEFT, padx=10)
 
         # Keyboard bindings
-        self.bind("<Return>", lambda _e: self.focus_get().invoke()  # type: ignore
-                  if hasattr(self.focus_get(), 'invoke') else None)
+        self.bind("<Return>", self._on_enter_key)
         self.bind("<Escape>", lambda _e: self._on_no())
 
         # Start with YES focused
@@ -1893,6 +1892,12 @@ class ElevationDialog(tk.Tk):
         self.attributes('-topmost', True)
         self.after_idle(self.attributes, '-topmost', False)
         self.focus_force()
+
+    def _on_enter_key(self, _event: Any) -> None:
+        """Invoke the currently focused button when Enter is pressed."""
+        widget = self.focus_get()
+        if isinstance(widget, tk.Button):
+            widget.invoke()
 
     def _create_styled_button(
         self, parent: tk.Widget, text: str,
