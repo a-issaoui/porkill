@@ -1861,7 +1861,7 @@ class ElevationDialog(tk.Tk):
 
         no_btn = tk.Button(
             btn_frame, text="[ NO - LIMITED ]",
-            fg=Config.NEON, bg=Config.BG, activebackground=Config.BG3,
+            fg=Config.NEON, bg=Config.BG, activebackground=Config.BG3, activeforeground="#ffffff",
             highlightcolor=Config.NEON_GLOW, highlightbackground=Config.NEON,
             command=self._on_no, **style  # type: ignore
         )
