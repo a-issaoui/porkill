@@ -1722,8 +1722,8 @@ class ElevationDialog(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.result = False
-        self.title("Porkill - Elevation")
-        self.geometry("400x180")
+        self.title("Porkill - Privilege Elevation")
+        self.geometry("420x200") # Slightly larger for longer text
         self.resizable(False, False)
         self.configure(bg="#080c08")
 
@@ -1740,7 +1740,7 @@ class ElevationDialog(tk.Tk):
         container.pack(fill=tk.BOTH, expand=True)
 
         title_label = tk.Label(
-            container, text="🛡️ ROOT ELEVATION",
+            container, text="⌬ PRIVILEGE ELEVATION",
             fg="#39ff14", bg="#080c08",
             font=("Fixedsys", 14, "bold")
         )
@@ -1748,7 +1748,7 @@ class ElevationDialog(tk.Tk):
 
         msg_label = tk.Label(
             container,
-            text="Gain full visibility of all system processes?\n(Requires password prompt)",
+            text="Gain full visibility of all process names?\nWithout root, system-owned names are hidden.\n(Requires admin password)",
             fg="#ffffff", bg="#080c08",
             font=("Fixedsys", 10), justify=tk.CENTER
         )
@@ -1757,17 +1757,17 @@ class ElevationDialog(tk.Tk):
         btn_frame = tk.Frame(container, bg="#080c08")
         btn_frame.pack()
 
-        style = {"font": ("Fixedsys", 10, "bold"), "width": 10, "bd": 1, "relief": tk.FLAT}
+        style = {"font": ("Fixedsys", 9, "bold"), "width": 16, "bd": 1, "relief": tk.FLAT}
 
         yes_btn = tk.Button(
-            btn_frame, text="[ YES ]",
+            btn_frame, text="[ YES - ELEVATED ]",
             fg="#080c08", bg="#39ff14", activebackground="#00ff00",
             command=self._on_yes, **style # type: ignore
         )
         yes_btn.pack(side=tk.LEFT, padx=10)
 
         no_btn = tk.Button(
-            btn_frame, text="[ NO ]",
+            btn_frame, text="[ NO - LIMITED ]",
             fg="#39ff14", bg="#080c08", activebackground="#1a1a1a",
             highlightbackground="#39ff14", highlightthickness=1,
             command=self._on_no, **style # type: ignore
@@ -1820,14 +1820,14 @@ def main() -> int:
                 except Exception as e:
                     logger.debug(f"GUI elevation dialog failed: {e}. Falling back to CLI.")
                     # Fallback to CLI prompt if GUI fails
-                    print("\n🛡️  Porkill Elevation Request")
-                    print("Gain full visibility of all system processes? [y/N]: ", end="", flush=True)
+                    print("\n🛡️  Porkill Privilege Request")
+                    print("Gain full visibility of all process names? [y/N]: ", end="", flush=True)
                     choice = sys.stdin.readline().strip().lower()
                     wants_elevation = choice in ('y', 'yes')
             else:
                 # CLI prompt
-                print("\n🛡️  Porkill Elevation Request")
-                print("Gain full visibility of all system processes? [y/N]: ", end="", flush=True)
+                print("\n🛡️  Porkill Privilege Request")
+                print("Gain full visibility of all process names? [y/N]: ", end="", flush=True)
                 choice = sys.stdin.readline().strip().lower()
                 wants_elevation = choice in ('y', 'yes')
         except KeyboardInterrupt:
