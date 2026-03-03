@@ -752,7 +752,8 @@ class LogoCanvas(tk.Canvas):
         for col in self._rain_cols:
             x, y, _spd, ci = col
             char = self._RAIN_CHARS[ci % len(self._RAIN_CHARS)]
-            fill = Config.NEON_DIM if random.random() > 0.7 else "#0a2a0a"
+            # Very subtle: barely above the background for an ambient feel
+            fill = "#0d1f0d" if random.random() > 0.85 else "#091209"
             self.create_text(x, int(y) % height, text=char,
                              font=("Monospace", 8), fill=fill, anchor="nw")
 
