@@ -1929,10 +1929,13 @@ class ElevationDialog(tk.Tk):
 
         def on_focus_out(e: Any) -> None:
             if e.widget == btn:
-                if btn.winfo_containing(e.x_root, e.y_root) == btn:
-                    btn.config(bg=hover_bg, fg=hover_fg)
-                else:
-                    btn.config(bg=normal_bg, fg=normal_fg)
+                try:
+                    if btn.winfo_containing(e.x_root, e.y_root) == btn:
+                        btn.config(bg=hover_bg, fg=hover_fg)
+                        return
+                except (tk.TclError, ValueError):
+                    pass
+                btn.config(bg=normal_bg, fg=normal_fg)
 
         btn.bind("<Enter>", on_enter)
         btn.bind("<Leave>", on_leave)
