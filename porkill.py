@@ -4,7 +4,7 @@ porkill — Process & Port Monitor / Killer
 A production-ready GUI application for monitoring and managing network ports and processes.
 
 Usage:
-    sudo python3 porkill_perfect.py [options]
+    sudo python3 porkill.py [options]
 
 Options:
     --interval SECONDS    Auto-refresh interval (default: 5, min: 2, max: 120)
@@ -85,7 +85,16 @@ def get_version() -> str:
             return version_file.read_text().strip()
     except Exception:
         pass
-    return "2.0.0"  # Hardcoded fallback for v2.0.0 release
+
+    # Check home config directory
+    try:
+        config_version = Path.home() / ".config" / "porkill" / "version"
+        if config_version.exists():
+            return config_version.read_text().strip()
+    except Exception:
+        pass
+
+    return "2.0.1"  # Hardcoded fallback for v2.0.1 release
 
 VERSION = get_version()
 
@@ -456,10 +465,26 @@ class PortDataFetcher:
 
         for line in result.stdout.splitlines()[1:]:
             parts = line.split()
-            if len(parts) < 6:
+            if len(parts) < 5:
                 continue
 
-            proto, state, local, proc_field = parts[0], parts[1], parts[4], parts[-1]
+            # ss output can be tricky. Usually:
+            # Netid State Recv-Q Send-Q Local Address:Port Peer Address:Port Process
+            # But columns can shift. We'll look for the part containing "pid="
+
+            proc_field = ""
+            for p in reversed(parts):
+                if "pid=" in p:
+                    proc_field = p
+                    break
+
+            # If no proc_field found with "pid=", try the last field if it looks like process info
+            if not proc_field and "(" in parts[-1] and ")" in parts[-1]:
+                proc_field = parts[-1]
+
+            proto = parts[0]
+            state = parts[1]
+            local = parts[4] if len(parts) > 4 else parts[-1]
 
             if not (match := re.search(r":(\d+)$", local)):
                 continue
@@ -472,6 +497,9 @@ class PortDataFetcher:
             if not pids:
                 pids = ["—"]
                 names = names or ["kernel"]
+            else:
+                # Fallback for name if pid found but name not
+                names = names or ["?"] * len(pids)
 
             if not names:
                 names = ["—"]
@@ -654,11 +682,6 @@ def send_signal_to_pid(pid: str, sig: signal.Signals) -> Tuple[bool, str]:
 # UI Components
 # ============================================================================
 
-class FontSpec(NamedTuple):
-    """Font specification tuple."""
-    family: str
-    size: int
-    weight: str = "normal"
 
 
 class LogoCanvas(tk.Canvas):
@@ -828,7 +851,7 @@ class LogoCanvas(tk.Canvas):
                     col[1] += col[2] * 2.0
                     if col[1] > (self.winfo_height() or 190):
                         col[1] = random.uniform(-40, 0)
-                        col[3] = random.randint(0, len(self._RAIN_CHARS) - 1)
+                        col[3] = (col[3] + 1) % len(self._RAIN_CHARS)
                     else:
                         col[3] = (col[3] + 1) % len(self._RAIN_CHARS)
 
@@ -985,9 +1008,11 @@ class Porkill(tk.Tk):
             Config.MAX_ROWS = config.max_rows
             self._auto_refresh_interval = max(2, min(120, config.interval))
             self._auto_refresh_enabled = not config.no_auto_refresh
+            self._no_animation = config.no_animation
         else:
             self._auto_refresh_interval = 5
             self._auto_refresh_enabled = True
+            self._no_animation = False
 
         # Resolve monospace font
         self._mono_font = resolve_mono_font()
@@ -1071,7 +1096,7 @@ class Porkill(tk.Tk):
     def _build_ui(self) -> None:
         """Build the user interface."""
         # Logo
-        LogoCanvas(self, auto_animate=not args.no_animation).pack(fill="x")
+        LogoCanvas(self, auto_animate=not self._no_animation).pack(fill="x")
         tk.Frame(self, bg=Config.NEON, height=1).pack(fill="x")
 
         # Control bar
@@ -1418,8 +1443,9 @@ class Porkill(tk.Tk):
         else:
             self._status_var.set(f"UPDATED {ts}")
 
-        # Clear to free memory (treeview holds its own copy)
-        rows.clear()
+        # Data is stored in self._all_rows. Python will GC the old list
+        # when self._all_rows is reassigned above. Do NOT call rows.clear()
+        # as it would empty self._all_rows too.
 
     def _update_stats(self, rows: List[PortRow]) -> None:
         """Update statistics badges."""
@@ -1721,9 +1747,7 @@ class Porkill(tk.Tk):
         super().destroy()
 
 
-# ============================================================================
-# Main Entry Point
-# ============================================================================
+
 
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments."""
@@ -1759,13 +1783,18 @@ Keyboard Shortcuts:
     parser.add_argument(
         "--log-level", "-l",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        default="ERROR",
+        default="INFO", # Changed default to INFO
         help="Logging level (default: INFO)"
     )
     parser.add_argument(
         "--no-animation",
         action="store_true",
         help="Disable the matrix rain background animation to save CPU"
+    )
+    parser.add_argument(
+        "--version", "-v",
+        action="store_true",
+        help="Show program version and exit"
     )
     return parser.parse_args()
 
@@ -1778,7 +1807,7 @@ class ElevationDialog(tk.Tk):
         self.title("Porkill - Privilege Elevation")
         self.geometry("420x200") # Slightly larger for longer text
         self.resizable(False, False)
-        self.configure(bg="#080c08")
+        self.configure(bg=Config.BG)
 
         # Center in screen
         self.update_idletasks()
@@ -1789,40 +1818,49 @@ class ElevationDialog(tk.Tk):
         self.geometry(f'+{x}+{y}')
 
         # UI Elements
-        container = tk.Frame(self, bg="#080c08", padx=20, pady=20)
+        container = tk.Frame(self, bg=Config.BG, padx=20, pady=20)
         container.pack(fill=tk.BOTH, expand=True)
+
+        # Header
+        try:
+            h_font = ("Fixedsys", 14, "bold")
+            # Minimal check if font exists by attempting to measure it
+            # (tk.font is better but we don't want more imports right now)
+            tk.Label(self, font=h_font).winfo_reqwidth()
+        except Exception:
+            h_font = ("Monospace", 14, "bold")
 
         title_label = tk.Label(
             container, text="⌬ PRIVILEGE ELEVATION",
-            fg="#39ff14", bg="#080c08",
-            font=("Fixedsys", 14, "bold")
+            fg=Config.NEON, bg=Config.BG,
+            font=h_font
         )
         title_label.pack(pady=(0, 10))
 
         msg_label = tk.Label(
             container,
             text="Gain full visibility of all process names?\nWithout root, system-owned names are hidden.\n(Requires admin password)",
-            fg="#ffffff", bg="#080c08",
-            font=("Fixedsys", 10), justify=tk.CENTER
+            fg=Config.FG, bg=Config.BG,
+            font=("Monospace", 10), justify=tk.CENTER
         )
         msg_label.pack(pady=(0, 20))
 
-        btn_frame = tk.Frame(container, bg="#080c08")
+        btn_frame = tk.Frame(container, bg=Config.BG)
         btn_frame.pack()
 
-        style = {"font": ("Fixedsys", 9, "bold"), "width": 16, "bd": 1, "relief": tk.FLAT}
+        style = {"font": ("Monospace", 9, "bold"), "width": 16, "bd": 1, "relief": tk.FLAT}
 
         yes_btn = tk.Button(
             btn_frame, text="[ YES - ELEVATED ]",
-            fg="#080c08", bg="#39ff14", activebackground="#00ff00",
+            fg=Config.BG, bg=Config.NEON, activebackground=Config.NEON_GLOW,
             command=self._on_yes, **style # type: ignore
         )
         yes_btn.pack(side=tk.LEFT, padx=10)
 
         no_btn = tk.Button(
             btn_frame, text="[ NO - LIMITED ]",
-            fg="#39ff14", bg="#080c08", activebackground="#1a1a1a",
-            highlightbackground="#39ff14", highlightthickness=1,
+            fg=Config.NEON, bg=Config.BG, activebackground=Config.BG3,
+            highlightbackground=Config.NEON, highlightthickness=1,
             command=self._on_no, **style # type: ignore
         )
         no_btn.pack(side=tk.LEFT, padx=10)
@@ -1910,6 +1948,15 @@ def main() -> int:
                 ret = subprocess.call(cmd)
                 if ret == 0:
                     return 0
+
+                # Fallback to sudo -E if pkexec failed
+                if launcher == "pkexec":
+                    logger.info("pkexec failed, falling back to sudo -E...")
+                    cmd = ["sudo", "-E", sys.executable, script_path] + sys.argv[1:]
+                    ret = subprocess.call(cmd)
+                    if ret == 0:
+                        return 0
+
                 logger.info("Elevation declined or failed. Continuing as normal user.")
             except Exception as e:
                 logger.error(f"Elevation error: {e}")
@@ -1922,7 +1969,11 @@ def main() -> int:
 
     args = parse_arguments()
 
-    # Set log level
+    if args.version:
+        print(f"porkill v{VERSION}")
+        return 0
+
+    # Setup logging
     logging.getLogger().setLevel(getattr(logging, args.log_level))
 
     # Validate arguments
