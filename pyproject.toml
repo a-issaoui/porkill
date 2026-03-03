@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "porkill"
-version = "1.7.0"
+dynamic = ["version"]
 authors = [
   { name="a-issaoui", email="your-email@example.com" },
 ]
@@ -29,3 +29,6 @@ porkill = "porkill:main"
 
 [tool.setuptools]
 py-modules = ["porkill"]
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}

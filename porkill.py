@@ -68,8 +68,26 @@ if not _TK_AVAILABLE:
 
 
 # ============================================================================
-# Configuration
+# Configuration & Versioning
 # ============================================================================
+
+def get_version() -> str:
+    """Read version from VERSION file or return fallback."""
+    try:
+        # Check current directory (for dev)
+        version_file = Path(__file__).parent / "VERSION"
+        if version_file.exists():
+            return version_file.read_text().strip()
+
+        # Check parent directory (for some build layouts)
+        version_file = Path(__file__).parent.parent / "VERSION"
+        if version_file.exists():
+            return version_file.read_text().strip()
+    except Exception:
+        pass
+    return "1.8.0"  # Hardcoded fallback for v1.8.0 release
+
+VERSION = get_version()
 
 class Config:
     """Application configuration with sensible defaults."""
