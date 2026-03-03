@@ -501,9 +501,6 @@ class PortDataFetcher:
                 # Fallback for name if pid found but name not
                 names = names or ["?"] * len(pids)
 
-            if not names:
-                names = ["—"]
-
             # Pad names to match pid count
             names.extend([names[-1]] * (len(pids) - len(names)))
 
@@ -1047,6 +1044,7 @@ class Porkill(tk.Tk):
         # State variables
         self._auto = tk.BooleanVar(value=self._auto_refresh_enabled)
         self._every = tk.IntVar(value=self._auto_refresh_interval)
+        self._every.trace_add("write", self._enforce_interval)
         self._filter_text = tk.StringVar()
         self._status_var = tk.StringVar(value="INITIALIZING...")
         self._info_var = tk.StringVar(value="-- no process selected --")
@@ -1180,6 +1178,17 @@ class Porkill(tk.Tk):
         if value == "":
             return True  # Allow empty while typing
         return value.isdigit() and 1 <= int(value) <= 120
+
+    def _enforce_interval(self, *_args: Any) -> None:
+        """Clamp the interval variable to valid range, recovering from bad input."""
+        try:
+            val = self._every.get()
+            if val < 2:
+                self._every.set(2)
+            elif val > 120:
+                self._every.set(120)
+        except tk.TclError:
+            self._every.set(2)
 
     def _build_filter_bar(self) -> None:
         """Build the filter input bar."""
@@ -1373,7 +1382,10 @@ class Porkill(tk.Tk):
         self._launch_fetch()
 
         if self._auto.get():
-            delay = max(2, self._every.get()) * 1000
+            try:
+                delay = max(2, self._every.get()) * 1000
+            except tk.TclError:
+                delay = 2000
             self._refresh_job = self.after(delay, self._on_refresh_tick) # type: ignore
 
     def _cancel_refresh_job(self) -> None:
@@ -1783,8 +1795,8 @@ Keyboard Shortcuts:
     parser.add_argument(
         "--log-level", "-l",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        default="WARNING", # Changed default to INFO
-        help="Logging level (default: INFO)"
+        default="WARNING",
+        help="Logging level (default: WARNING)"
     )
     parser.add_argument(
         "--no-animation",
