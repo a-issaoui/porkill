@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=porkill
 Comment=Process & Port Monitor / Killer
-Exec=porkill
+Exec=pkexec porkill
 Icon=porkill
 Type=Application
 Categories=System;

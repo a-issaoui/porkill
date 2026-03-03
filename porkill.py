@@ -1720,6 +1720,28 @@ Keyboard Shortcuts:
 
 def main() -> int:
     """Main entry point."""
+    # Check for root privileges and relaunch if necessary
+    if os.geteuid() != 0:
+        # Check if we are in a graphical environment
+        has_display = os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")
+        launcher = "pkexec" if has_display else "sudo"
+
+        logger.info(f"Restarting with root privileges using {launcher}...")
+
+        try:
+            # Reconstruct the command line
+            # If launched via AppImage or binary, sys.argv[0] might be the path.
+            # If launched via python3 script.py, sys.argv[0] is script.py.
+            cmd = [launcher, sys.executable] + sys.argv
+            os.execvp(launcher, cmd)
+        except Exception as e:
+            logger.error(f"Failed to elevate privileges: {e}")
+            # Fallback: continue as normal user, but warn
+            print("\n" + "!" * 60)
+            print("WARNING: RUNNING WITHOUT ROOT PRIVILEGES")
+            print("Process names and termination capabilities will be restricted.")
+            print("!" * 60 + "\n")
+
     args = parse_arguments()
 
     # Set log level
