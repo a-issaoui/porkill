@@ -6,7 +6,7 @@
   ### **Monitor Processes. Kill Ports. Precision Control.**
 
   <p align="center">
-    <img src="https://img.shields.io/badge/VERSION-v1.4.0-39ff14?style=for-the-badge&labelColor=080c08" alt="Version">
+    <img src="https://img.shields.io/badge/VERSION-v1.4.1-39ff14?style=for-the-badge&labelColor=080c08" alt="Version">
     <img src="https://img.shields.io/badge/PLATFORM-LINUX-00ffcc?style=for-the-badge&labelColor=080c08" alt="Platform">
     <img src="https://img.shields.io/badge/LICENSE-MIT-ff00ff?style=for-the-badge&labelColor=080c08" alt="License">
   </p>
@@ -67,9 +67,9 @@ sudo dnf install porkill
 | Store | Command |
 | :--- | :--- |
 | **Snap Store** | `sudo snap install porkill` |
-| **AppImage** | `wget https://github.com/a-issaoui/porkill/releases/download/v1.4.0/porkill-v1.4.0-x86_64.AppImage` |
-| **Manual .deb** | `sudo apt install ./porkill_1.4.0_amd64.deb` |
-| **Manual .rpm** | `sudo dnf install ./porkill-1.4.0-1.x86_64.rpm` |
+| **AppImage** | `wget https://github.com/a-issaoui/porkill/releases/download/v1.4.1/porkill-v1.4.1-x86_64.AppImage` |
+| **Manual .deb** | `sudo apt install ./porkill_1.4.1_amd64.deb` |
+| **Manual .rpm** | `sudo dnf install ./porkill-1.4.1-1.x86_64.rpm` |
 
 ---
 

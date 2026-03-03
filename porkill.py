@@ -1729,10 +1729,11 @@ def main() -> int:
         logger.info(f"Restarting with root privileges using {launcher}...")
 
         try:
-            # Reconstruct the command line
-            # If launched via AppImage or binary, sys.argv[0] might be the path.
-            # If launched via python3 script.py, sys.argv[0] is script.py.
-            cmd = [launcher, sys.executable] + sys.argv
+            # Get absolute path of the current script
+            script_path = os.path.abspath(sys.argv[0])
+
+            # Reconstruct the command line using the absolute path
+            cmd = [launcher, sys.executable, script_path] + sys.argv[1:]
             os.execvp(launcher, cmd)
         except Exception as e:
             logger.error(f"Failed to elevate privileges: {e}")
