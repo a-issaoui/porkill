@@ -1717,10 +1717,10 @@ Keyboard Shortcuts:
     return parser.parse_args()
 
 
-class ElevationDialog(tk.Toplevel):
+class ElevationDialog(tk.Tk):
     """A styled confirmation dialog for root elevation."""
-    def __init__(self, parent: Any) -> None:
-        super().__init__(parent)
+    def __init__(self) -> None:
+        super().__init__()
         self.result = False
         self.title("Porkill - Elevation")
         self.geometry("400x180")
@@ -1734,10 +1734,6 @@ class ElevationDialog(tk.Toplevel):
         x = (self.winfo_screenwidth() // 2) - (width // 2)
         y = (self.winfo_screenheight() // 2) - (height // 2)
         self.geometry(f'+{x}+{y}')
-
-        # Make it modal-ish
-        self.transient(parent)
-        self.grab_set()
 
         # UI Elements
         container = tk.Frame(self, bg="#080c08", padx=20, pady=20)
@@ -1781,6 +1777,12 @@ class ElevationDialog(tk.Toplevel):
         # Handle widow close
         self.protocol("WM_DELETE_WINDOW", self._on_no)
 
+        # Force visibility
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after_idle(self.attributes, '-topmost', False)
+        self.focus_force()
+
     def _on_yes(self) -> None:
         self.result = True
         self.destroy()
@@ -1811,15 +1813,10 @@ def main() -> int:
         try:
             if has_display:
                 try:
-                    # Create a temporary root for the dialog
-                    root = tk.Tk()
-                    root.withdraw()
-                    dialog = ElevationDialog(root)
-                    dialog.lift()  # Bring to front
-                    dialog.focus_force()  # Force focus
-                    root.wait_window(dialog)
+                    # Create and run the dialog as a primary window
+                    dialog = ElevationDialog()
+                    dialog.mainloop()
                     wants_elevation = dialog.result
-                    root.destroy()
                 except Exception as e:
                     logger.debug(f"GUI elevation dialog failed: {e}. Falling back to CLI.")
                     # Fallback to CLI prompt if GUI fails

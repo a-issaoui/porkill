@@ -6,7 +6,7 @@
   ### **Monitor Processes. Kill Ports. Precision Control.**
 
   <p align="center">
-    <img src="https://img.shields.io/badge/VERSION-v1.6.1-39ff14?style=for-the-badge&labelColor=080c08" alt="Version">
+    <img src="https://img.shields.io/badge/VERSION-v1.6.2-39ff14?style=for-the-badge&labelColor=080c08" alt="Version">
     <img src="https://img.shields.io/badge/PLATFORM-LINUX-00ffcc?style=for-the-badge&labelColor=080c08" alt="Platform">
     <img src="https://img.shields.io/badge/LICENSE-MIT-ff00ff?style=for-the-badge&labelColor=080c08" alt="License">
   </p>
@@ -64,12 +64,16 @@ sudo dnf install porkill
 
 ### 📦 Option 2: Universal Stores
 
+## Current Version: v1.6.2
+
+[Porkill v1.6.2](https://github.com/a-issaoui/porkill/releases/tag/v1.6.2) is now officially released with **Elevation Confirmation Dialog** structural visibility fixes.
+
 | Store | Command |
 | :--- | :--- |
 | **Snap Store** | `sudo snap install porkill` |
-| **AppImage** | `wget https://github.com/a-issaoui/porkill/releases/download/v1.6.1/porkill-v1.6.1-x86_64.AppImage` |
-| **Manual .deb** | `sudo apt install ./porkill_1.6.1_amd64.deb` |
-| **Manual .rpm** | `sudo dnf install ./porkill-1.6.1-1.x86_64.rpm` |
+| **AppImage** | `wget https://github.com/a-issaoui/porkill/releases/download/v1.6.2/porkill-v1.6.2-x86_64.AppImage` |
+| **Manual .deb** | `sudo apt install ./porkill_1.6.2_amd64.deb` |
+| **Manual .rpm** | `sudo dnf install ./porkill-1.6.2-1.x86_64.rpm` |
 
 ---
 
