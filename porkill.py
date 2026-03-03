@@ -1037,7 +1037,7 @@ class Porkill(tk.Tk):
         self._rebuilding: bool = False
 
         # Threading
-        self._fetch_lock = threading.RLock()
+        self._fetch_lock = threading.Lock()
         self._fetching: bool = False
         self._refresh_job: Optional[str] = None
         self._filter_job: Optional[str] = None
@@ -1071,7 +1071,7 @@ class Porkill(tk.Tk):
     def _build_ui(self) -> None:
         """Build the user interface."""
         # Logo
-        LogoCanvas(self).pack(fill="x")
+        LogoCanvas(self, auto_animate=not args.no_animation).pack(fill="x")
         tk.Frame(self, bg=Config.NEON, height=1).pack(fill="x")
 
         # Control bar
@@ -1761,6 +1761,11 @@ Keyboard Shortcuts:
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         default="ERROR",
         help="Logging level (default: INFO)"
+    )
+    parser.add_argument(
+        "--no-animation",
+        action="store_true",
+        help="Disable the matrix rain background animation to save CPU"
     )
     return parser.parse_args()
 
