@@ -30,15 +30,15 @@
 
 ## 🔥 Key Features
 
-| Feature | Description | Icon |
-| :--- | :--- | :---: |
-| **Real-time Engine** | Direct `/proc/net/` reads for sub-millisecond updates without external tools. | 🔍 |
-| **Process Grouping** | Automatically groups child/parent port clusters for batch termination. | 📂 |
-| **Container Aware** | Native detection for **Docker**, **Podman**, and **Kubernetes** runtimes. | 📦 |
-| **Dual-Mode Kill** | Graceful `SIGTERM` or ruthless `SIGKILL -9` with safe confirmation. | 💀 |
-| **Smart Filtering** | Debounced live search across PID, Name, Port, and Connection State. | ⚡ |
-| **Matrix Aesthetics** | Animated rain, neon gauges, and a pulsing corner HUD. | 🎨 |
-| **Universal Support** | Available via **APT**, **DNF**, **Snap**, **AppImage**, and **Flatpak**. | 🌍 |
+| Feature                  | Description |
+|:-------------------------| :--- |
+| **🔍 Real-time Engine**  | Direct `/proc/net/` reads for sub-millisecond updates without external tools. |
+| **📂 Process Grouping**  | Automatically groups child/parent port clusters for batch termination. |
+| **📦 Container Aware**   | Native detection for **Docker**, **Podman**, and **Kubernetes** runtimes. |
+| **💀 Dual-Mode Kill**    | Graceful `SIGTERM` or ruthless `SIGKILL -9` with safe confirmation. |
+| **⚡ Smart Filtering**    | Debounced live search across PID, Name, Port, and Connection State. |
+| **🎨 Matrix Aesthetics** | Animated rain, neon gauges, and a pulsing corner HUD. |
+| **🌍 Universal Support** | Available via **APT**, **DNF**, **Snap**, **AppImage**, and **Flatpak**. |
 
 ---
 
@@ -126,7 +126,6 @@ chmod +x build.sh
 <div align="center">
 
 Built with 💚 by [a-issaoui](https://github.com/a-issaoui)
-**[ VISIT PROJECT ON GITHUB ](https://github.com/a-issaoui/porkill)**
 
 <br>
 
