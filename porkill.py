@@ -1881,8 +1881,10 @@ class ElevationDialog(tk.Tk):
         self.bind("<Return>", self._on_enter_key)
         self.bind("<Escape>", lambda _e: self._on_no())
 
-        # Start with YES focused
-        self.yes_btn.focus_set()
+        # Start with YES focused (defer to after window is mapped)
+        def _apply_initial_focus() -> None:
+            self.yes_btn.focus_set()
+            self.yes_btn.config(bg=Config.NEON_GLOW, fg=Config.BG)
 
         # Handle window close
         self.protocol("WM_DELETE_WINDOW", self._on_no)
@@ -1892,6 +1894,7 @@ class ElevationDialog(tk.Tk):
         self.attributes('-topmost', True)
         self.after_idle(self.attributes, '-topmost', False)
         self.focus_force()
+        self.after(50, _apply_initial_focus)
 
     def _on_enter_key(self, _event: Any) -> None:
         """Invoke the currently focused button when Enter is pressed."""
