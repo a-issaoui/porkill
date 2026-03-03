@@ -1,6 +1,6 @@
 name: porkill
 base: core22
-version: '1.5.0'
+version: '1.6.0'
 summary: A cyberpunk-themed GUI for monitoring and killing processes by port.
 description: |
   Porkill is a Linux desktop application for visualising every open network port

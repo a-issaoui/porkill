@@ -1714,59 +1714,144 @@ Keyboard Shortcuts:
         default="ERROR",
         help="Logging level (default: INFO)"
     )
-
     return parser.parse_args()
 
 
+class ElevationDialog(tk.Toplevel):
+    """A styled confirmation dialog for root elevation."""
+    def __init__(self, parent: Any) -> None:
+        super().__init__(parent)
+        self.result = False
+        self.title("Porkill - Elevation")
+        self.geometry("400x180")
+        self.resizable(False, False)
+        self.configure(bg="#080c08")
+
+        # Center in screen
+        self.update_idletasks()
+        width = self.winfo_width()
+        height = self.winfo_height()
+        x = (self.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.winfo_screenheight() // 2) - (height // 2)
+        self.geometry(f'+{x}+{y}')
+
+        # Make it modal-ish
+        self.transient(parent)
+        self.grab_set()
+
+        # UI Elements
+        container = tk.Frame(self, bg="#080c08", padx=20, pady=20)
+        container.pack(fill=tk.BOTH, expand=True)
+
+        title_label = tk.Label(
+            container, text="🛡️ ROOT ELEVATION",
+            fg="#39ff14", bg="#080c08",
+            font=("Fixedsys", 14, "bold")
+        )
+        title_label.pack(pady=(0, 10))
+
+        msg_label = tk.Label(
+            container,
+            text="Gain full visibility of all system processes?\n(Requires password prompt)",
+            fg="#ffffff", bg="#080c08",
+            font=("Fixedsys", 10), justify=tk.CENTER
+        )
+        msg_label.pack(pady=(0, 20))
+
+        btn_frame = tk.Frame(container, bg="#080c08")
+        btn_frame.pack()
+
+        style = {"font": ("Fixedsys", 10, "bold"), "width": 10, "bd": 1, "relief": tk.FLAT}
+
+        yes_btn = tk.Button(
+            btn_frame, text="[ YES ]",
+            fg="#080c08", bg="#39ff14", activebackground="#00ff00",
+            command=self._on_yes, **style # type: ignore
+        )
+        yes_btn.pack(side=tk.LEFT, padx=10)
+
+        no_btn = tk.Button(
+            btn_frame, text="[ NO ]",
+            fg="#39ff14", bg="#080c08", activebackground="#1a1a1a",
+            highlightbackground="#39ff14", highlightthickness=1,
+            command=self._on_no, **style # type: ignore
+        )
+        no_btn.pack(side=tk.LEFT, padx=10)
+
+        # Handle widow close
+        self.protocol("WM_DELETE_WINDOW", self._on_no)
+
+    def _on_yes(self) -> None:
+        self.result = True
+        self.destroy()
+
+    def _on_no(self) -> None:
+        self.result = False
+        self.destroy()
+
 def main() -> int:
     """Main entry point."""
-    # Check for root privileges and attempt non-blocking elevation if necessary
+    # Check for root privileges and attempt confirmed elevation if necessary
     if os.geteuid() != 0 and not os.environ.get("PORKILL_ELEVATION_ATTEMPTED"):
         # Guard against relaunch loops
         os.environ["PORKILL_ELEVATION_ATTEMPTED"] = "1"
 
         # Check if we are in a graphical environment
         has_display = os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")
-        launcher = "pkexec" if has_display else "sudo"
 
-        logger.info(f"Attempting to restart with root privileges using {launcher}...")
+        wants_elevation = False
+        if has_display:
+            try:
+                # Create a temporary root for the dialog
+                root = tk.Tk()
+                root.withdraw()
+                dialog = ElevationDialog(root)
+                root.wait_window(dialog)
+                wants_elevation = dialog.result
+                root.destroy()
+            except Exception:
+                # If Tkinter fails, fallback to CLI if possible
+                wants_elevation = False
+        else:
+            # CLI prompt
+            print("\n🛡️  Porkill Elevation Request")
+            print("Gain full visibility of all system processes? [y/N]: ", end="", flush=True)
+            try:
+                choice = sys.stdin.readline().strip().lower()
+                wants_elevation = choice in ('y', 'yes')
+            except EOFError:
+                wants_elevation = False
 
-        try:
-            # Get absolute path of the current script
-            script_path = os.path.abspath(sys.argv[0])
+        if wants_elevation:
+            launcher = "pkexec" if has_display else "sudo"
+            logger.info(f"Attempting to restart with root privileges using {launcher}...")
 
-            # Collect essential GUI environment variables to pass through to root
-            env_vars = []
-            for var in ["DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"]:
-                val = os.environ.get(var)
-                if val:
-                    env_vars.append(f"{var}={val}")
+            try:
+                script_path = os.path.abspath(sys.argv[0])
+                env_vars = []
+                for var in ["DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"]:
+                    val = os.environ.get(var)
+                    if val:
+                        env_vars.append(f"{var}={val}")
 
-            if not os.environ.get("XAUTHORITY") and os.environ.get("HOME"):
-                xauth = os.path.join(os.environ["HOME"], ".Xauthority")
-                if os.path.exists(xauth):
-                    env_vars.append(f"XAUTHORITY={xauth}")
+                if not os.environ.get("XAUTHORITY") and os.environ.get("HOME"):
+                    xauth = os.path.join(os.environ["HOME"], ".Xauthority")
+                    if os.path.exists(xauth):
+                        env_vars.append(f"XAUTHORITY={xauth}")
 
-            # Reconstruct the command line
-            cmd = [launcher, "env"] + env_vars + [sys.executable, script_path] + sys.argv[1:]
-
-            # Run elevation attempt (non-blocking in terms of logic, but waits for prompt)
-            # If the user cancels pkexec, it returns non-zero.
-            ret = subprocess.call(cmd)
-
-            if ret == 0:
-                # Successfully launched the elevated child; this parent process is done.
-                return 0
-
-            # If we reach here, elevation was cancelled or failed.
-            logger.info("Elevation declined or failed. Continuing as normal user.")
+                cmd = [launcher, "env"] + env_vars + [sys.executable, script_path] + sys.argv[1:]
+                ret = subprocess.call(cmd)
+                if ret == 0:
+                    return 0
+                logger.info("Elevation declined or failed. Continuing as normal user.")
+            except Exception as e:
+                logger.error(f"Elevation error: {e}")
+        else:
+            logger.info("Running as normal user by request.")
             print("\n" + "!" * 65)
-            print("INFO: RUNNING AS NORMAL USER (Elevation Declined)")
+            print("INFO: RUNNING AS NORMAL USER")
             print("Full process names for system sockets will be hidden.")
             print("!" * 65 + "\n")
-
-        except Exception as e:
-            logger.error(f"Elevation error: {e}")
 
     args = parse_arguments()
 
