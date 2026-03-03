@@ -1791,6 +1791,14 @@ class ElevationDialog(tk.Toplevel):
 
 def main() -> int:
     """Main entry point."""
+    # Set up signal handler early to ensure Ctrl+C works during elevation check
+    def handle_sigint(_sig_num: int, _frame: Any) -> None:
+        """Handle SIGINT by exiting immediately if app hasn't started yet."""
+        logger.info("Interrupt received, shutting down...")
+        sys.exit(1)
+
+    signal.signal(signal.SIGINT, handle_sigint)
+
     # Check for root privileges and attempt confirmed elevation if necessary
     if os.geteuid() != 0 and not os.environ.get("PORKILL_ELEVATION_ATTEMPTED"):
         # Guard against relaunch loops
@@ -1800,27 +1808,36 @@ def main() -> int:
         has_display = os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")
 
         wants_elevation = False
-        if has_display:
-            try:
-                # Create a temporary root for the dialog
-                root = tk.Tk()
-                root.withdraw()
-                dialog = ElevationDialog(root)
-                root.wait_window(dialog)
-                wants_elevation = dialog.result
-                root.destroy()
-            except Exception:
-                # If Tkinter fails, fallback to CLI if possible
-                wants_elevation = False
-        else:
-            # CLI prompt
-            print("\n🛡️  Porkill Elevation Request")
-            print("Gain full visibility of all system processes? [y/N]: ", end="", flush=True)
-            try:
+        try:
+            if has_display:
+                try:
+                    # Create a temporary root for the dialog
+                    root = tk.Tk()
+                    root.withdraw()
+                    dialog = ElevationDialog(root)
+                    dialog.lift()  # Bring to front
+                    dialog.focus_force()  # Force focus
+                    root.wait_window(dialog)
+                    wants_elevation = dialog.result
+                    root.destroy()
+                except Exception as e:
+                    logger.debug(f"GUI elevation dialog failed: {e}. Falling back to CLI.")
+                    # Fallback to CLI prompt if GUI fails
+                    print("\n🛡️  Porkill Elevation Request")
+                    print("Gain full visibility of all system processes? [y/N]: ", end="", flush=True)
+                    choice = sys.stdin.readline().strip().lower()
+                    wants_elevation = choice in ('y', 'yes')
+            else:
+                # CLI prompt
+                print("\n🛡️  Porkill Elevation Request")
+                print("Gain full visibility of all system processes? [y/N]: ", end="", flush=True)
                 choice = sys.stdin.readline().strip().lower()
                 wants_elevation = choice in ('y', 'yes')
-            except EOFError:
-                wants_elevation = False
+        except KeyboardInterrupt:
+            logger.info("Elevation cancelled by user (SIGINT).")
+            return 0
+        except EOFError:
+            wants_elevation = False
 
         if wants_elevation:
             launcher = "pkexec" if has_display else "sudo"
@@ -1865,8 +1882,8 @@ def main() -> int:
     # Create application
     app = Porkill(args)
 
-    # Set up signal handler
-    def handle_sigint(_sig_num: int, _frame: Any) -> None:
+    # Re-bind signal handler to the app's quit logic
+    def app_sigint_handler(_sig_num: int, _frame: Any) -> None:
         """Handle SIGINT by scheduling quit on main thread."""
         try:
             if app.winfo_exists():
@@ -1874,7 +1891,7 @@ def main() -> int:
         except tk.TclError:
             pass
 
-    signal.signal(signal.SIGINT, handle_sigint)
+    signal.signal(signal.SIGINT, app_sigint_handler)
 
     # Run main loop
     try:

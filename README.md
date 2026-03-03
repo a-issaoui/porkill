@@ -6,7 +6,7 @@
   ### **Monitor Processes. Kill Ports. Precision Control.**
 
   <p align="center">
-    <img src="https://img.shields.io/badge/VERSION-v1.6.0-39ff14?style=for-the-badge&labelColor=080c08" alt="Version">
+    <img src="https://img.shields.io/badge/VERSION-v1.6.1-39ff14?style=for-the-badge&labelColor=080c08" alt="Version">
     <img src="https://img.shields.io/badge/PLATFORM-LINUX-00ffcc?style=for-the-badge&labelColor=080c08" alt="Platform">
     <img src="https://img.shields.io/badge/LICENSE-MIT-ff00ff?style=for-the-badge&labelColor=080c08" alt="License">
   </p>
@@ -38,7 +38,7 @@
 | **💀 Dual-Mode Kill**    | Graceful `SIGTERM` or ruthless `SIGKILL -9` with safe confirmation. |
 | **⚡ Smart Filtering**    | Debounced live search across PID, Name, Port, and Connection State. |
 | **🎨 Matrix Aesthetics** | Animated rain, neon gauges, and a pulsing corner HUD. |
-| **🛡️ Hybrid Elevation** | Styled "Yes/No" prompt for root access with seamless user-mode fallback. | 🛡️ |
+| **🛡️ Hybrid Elevation** | Styled "Yes/No" prompt for root access with seamless user-mode fallback. |
 | **🌍 Universal Support** | Available via **APT**, **DNF**, **Snap**, **AppImage**, and **Flatpak**. |
 
 ---
@@ -67,9 +67,9 @@ sudo dnf install porkill
 | Store | Command |
 | :--- | :--- |
 | **Snap Store** | `sudo snap install porkill` |
-| **AppImage** | `wget https://github.com/a-issaoui/porkill/releases/download/v1.6.0/porkill-v1.6.0-x86_64.AppImage` |
-| **Manual .deb** | `sudo apt install ./porkill_1.6.0_amd64.deb` |
-| **Manual .rpm** | `sudo dnf install ./porkill-1.6.0-1.x86_64.rpm` |
+| **AppImage** | `wget https://github.com/a-issaoui/porkill/releases/download/v1.6.1/porkill-v1.6.1-x86_64.AppImage` |
+| **Manual .deb** | `sudo apt install ./porkill_1.6.1_amd64.deb` |
+| **Manual .rpm** | `sudo dnf install ./porkill-1.6.1-1.x86_64.rpm` |
 
 ---
 
@@ -97,38 +97,42 @@ sudo porkill [options]
 
 ## ⌨️ Keyboard Shortcuts
 
-| Key | Action |
+| Shortcut | Action |
 | :--- | :--- |
-| <kbd>F5</kbd> or <kbd>Ctrl</kbd>+<kbd>R</kbd> | **Force Refresh** |
-| <kbd>Delete</kbd> | **SIGTERM** (Graceful Stop) |
-| <kbd>Ctrl</kbd>+<kbd>K</kbd> | **SIGKILL** (Force Terminate) |
-| <kbd>Ctrl</kbd>+<kbd>F</kbd> | **Focus Filter** |
-| <kbd>Esc</kbd> | **Clear Selection** |
+| `Ctrl + F` | Focus Search Bar |
+| `Esc` | Clear Search / Deselect |
+| `Delete` | Kill selected process (SIGTERM) |
+| `Shift + Delete` | Force Kill (SIGKILL -9) |
+| `Ctrl + R` | Force Refresh |
+| `Ctrl + Q` | Quit |
 
 ---
 
 ## 🛠️ Build from Source
-Generated images and full binary bundles are supported via `build.sh`.
+
+Porkill uses `nfpm` for packaging and `shiv` for standalone binaries.
 
 ```bash
-chmod +x build.sh
-./build.sh v1.3.0
+# Install build tools
+pip install shiv self-elevate
+
+# Build standalone executable
+shiv -e porkill.main -o porkill .
+
+# Generate .deb / .rpm (requires nfpm)
+nfpm package -p deb
+nfpm package -p rpm
 ```
 
 ---
 
-## 📝 Compatibility
-- **Wayland**: Fully supported via XWayland (default on most modern distros).
-- **Architecture**: Multi-arch builds for `x86_64` and `AArch64` (ARM).
-- **Permissions**: Safe internal escalation via `sudo -n` when killing system-protected ports.
+## 📜 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
 <div align="center">
-
-Built with 💚 by [a-issaoui](https://github.com/a-issaoui)
-
-<br>
-
-<sub>[ Process & Port Monitor // Kill with Precision ]</sub>
+  <img src="banner.svg" width="400" alt="porkill logo bottom">
+  <p><i>Precise Port Termination. Pure Python Power.</i></p>
 </div>
