@@ -85,7 +85,7 @@ def get_version() -> str:
             return version_file.read_text().strip()
     except Exception:
         pass
-    return "1.8.0"  # Hardcoded fallback for v1.8.0 release
+    return "2.0.0"  # Hardcoded fallback for v2.0.0 release
 
 VERSION = get_version()
 
@@ -459,7 +459,7 @@ class PortDataFetcher:
             if len(parts) < 6:
                 continue
 
-            proto, state, local, *_, proc_field = parts[0], parts[1], parts[4], parts[-1]
+            proto, state, local, proc_field = parts[0], parts[1], parts[4], parts[-1]
 
             if not (match := re.search(r":(\d+)$", local)):
                 continue
@@ -472,6 +472,9 @@ class PortDataFetcher:
             if not pids:
                 pids = ["—"]
                 names = names or ["kernel"]
+
+            if not names:
+                names = ["—"]
 
             # Pad names to match pid count
             names.extend([names[-1]] * (len(pids) - len(names)))

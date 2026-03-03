@@ -6,7 +6,7 @@
   ### **Monitor Processes. Kill Ports. Precision Control.**
 
   <p align="center">
-    <img src="https://img.shields.io/badge/VERSION-v1.8.0-39ff14?style=for-the-badge&labelColor=080c08" alt="Version">
+    <img src="https://img.shields.io/badge/VERSION-v2.0.0-39ff14?style=for-the-badge&labelColor=080c08" alt="Version">
     <img src="https://img.shields.io/badge/PLATFORM-LINUX-00ffcc?style=for-the-badge&labelColor=080c08" alt="Platform">
     <img src="https://img.shields.io/badge/LICENSE-MIT-ff00ff?style=for-the-badge&labelColor=080c08" alt="License">
   </p>
@@ -48,8 +48,12 @@
 - [x] Implement Elevation Confirmation Dialog (v1.6.x)
 - [x] Refine Elevation UX (v1.7.0)
 - [x] Centralize Project Versioning (v1.8.0)
-    - [x] Create root `VERSION` source-of-truth
-    - [x] Update `porkill.py` and dynamic packaging
+- [ ] Implement v2.0.0 Improvements (update.md)
+    - [x] Fix `_parse_ss_output` unpacking bug
+    - [x] Handle empty process names in `ss` output
+    - [ ] Implement Multi-PID Group Kill logic
+    - [ ] Add `--no-animation` toggle
+    - [ ] Stricter Spinbox validation
 
 ---
 
@@ -74,16 +78,16 @@ sudo dnf install porkill
 
 ### 📦 Option 2: Universal Stores
 
-## Current Version: v1.8.0
+## Current Version: v2.0.0
 
-[Porkill v1.8.0](https://github.com/a-issaoui/porkill/releases/tag/v1.8.0) is now officially released with **Centralized Project Versioning**. Update once, deploy everywhere!
+[Porkill v2.0.0](https://github.com/a-issaoui/porkill/releases/tag/v2.0.0) is now officially released with **Critical Stability Fixes & Refined Logic**.
 
 | Store | Command |
 | :--- | :--- |
 | **Snap Store** | `sudo snap install porkill` |
-| **AppImage** | `wget https://github.com/a-issaoui/porkill/releases/download/v1.8.0/porkill-v1.8.0-x86_64.AppImage` |
-| **Manual .deb** | `sudo apt install ./porkill_1.8.0_amd64.deb` |
-| **Manual .rpm** | `sudo dnf install ./porkill-1.8.0-1.x86_64.rpm` |
+| **AppImage** | `wget https://github.com/a-issaoui/porkill/releases/download/v2.0.0/porkill-v2.0.0-x86_64.AppImage` |
+| **Manual .deb** | `sudo apt install ./porkill_2.0.0_amd64.deb` |
+| **Manual .rpm** | `sudo dnf install ./porkill-2.0.0-1.x86_64.rpm` |
 
 ---
 
