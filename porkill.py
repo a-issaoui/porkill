@@ -1732,8 +1732,22 @@ def main() -> int:
             # Get absolute path of the current script
             script_path = os.path.abspath(sys.argv[0])
 
-            # Reconstruct the command line using the absolute path
-            cmd = [launcher, sys.executable, script_path] + sys.argv[1:]
+            # Collect essential GUI environment variables to pass through to root
+            env_vars = []
+            for var in ["DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY"]:
+                val = os.environ.get(var)
+                if val:
+                    env_vars.append(f"{var}={val}")
+
+            # If XAUTHORITY is not set, manually locate it in the user's home
+            if not os.environ.get("XAUTHORITY") and os.environ.get("HOME"):
+                xauth = os.path.join(os.environ["HOME"], ".Xauthority")
+                if os.path.exists(xauth):
+                    env_vars.append(f"XAUTHORITY={xauth}")
+
+            # Reconstruct the command line using the absolute path and preserved env
+            # We use 'env' to inject the variables into the new root process
+            cmd = [launcher, "env"] + env_vars + [sys.executable, script_path] + sys.argv[1:]
             os.execvp(launcher, cmd)
         except Exception as e:
             logger.error(f"Failed to elevate privileges: {e}")
