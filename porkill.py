@@ -1720,13 +1720,16 @@ Keyboard Shortcuts:
 
 def main() -> int:
     """Main entry point."""
-    # Check for root privileges and relaunch if necessary
-    if os.geteuid() != 0:
+    # Check for root privileges and attempt non-blocking elevation if necessary
+    if os.geteuid() != 0 and not os.environ.get("PORKILL_ELEVATION_ATTEMPTED"):
+        # Guard against relaunch loops
+        os.environ["PORKILL_ELEVATION_ATTEMPTED"] = "1"
+
         # Check if we are in a graphical environment
         has_display = os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")
         launcher = "pkexec" if has_display else "sudo"
 
-        logger.info(f"Restarting with root privileges using {launcher}...")
+        logger.info(f"Attempting to restart with root privileges using {launcher}...")
 
         try:
             # Get absolute path of the current script
@@ -1739,23 +1742,31 @@ def main() -> int:
                 if val:
                     env_vars.append(f"{var}={val}")
 
-            # If XAUTHORITY is not set, manually locate it in the user's home
             if not os.environ.get("XAUTHORITY") and os.environ.get("HOME"):
                 xauth = os.path.join(os.environ["HOME"], ".Xauthority")
                 if os.path.exists(xauth):
                     env_vars.append(f"XAUTHORITY={xauth}")
 
-            # Reconstruct the command line using the absolute path and preserved env
-            # We use 'env' to inject the variables into the new root process
+            # Reconstruct the command line
             cmd = [launcher, "env"] + env_vars + [sys.executable, script_path] + sys.argv[1:]
-            os.execvp(launcher, cmd)
+
+            # Run elevation attempt (non-blocking in terms of logic, but waits for prompt)
+            # If the user cancels pkexec, it returns non-zero.
+            ret = subprocess.call(cmd)
+
+            if ret == 0:
+                # Successfully launched the elevated child; this parent process is done.
+                return 0
+
+            # If we reach here, elevation was cancelled or failed.
+            logger.info("Elevation declined or failed. Continuing as normal user.")
+            print("\n" + "!" * 65)
+            print("INFO: RUNNING AS NORMAL USER (Elevation Declined)")
+            print("Full process names for system sockets will be hidden.")
+            print("!" * 65 + "\n")
+
         except Exception as e:
-            logger.error(f"Failed to elevate privileges: {e}")
-            # Fallback: continue as normal user, but warn
-            print("\n" + "!" * 60)
-            print("WARNING: RUNNING WITHOUT ROOT PRIVILEGES")
-            print("Process names and termination capabilities will be restricted.")
-            print("!" * 60 + "\n")
+            logger.error(f"Elevation error: {e}")
 
     args = parse_arguments()
 
