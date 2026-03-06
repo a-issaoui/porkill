@@ -10,83 +10,119 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-latest' || 'ubuntu-latest' }}
     strategy:
+      fail-fast: false
       matrix:
         arch: [x86_64, aarch64]
+
     steps:
       - uses: actions/checkout@v4
 
+      # ── QEMU for cross-compilation (aarch64 only) ──────────────────────────
       - name: Set up QEMU
         if: matrix.arch == 'aarch64'
         uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
 
+      # ── Python ────────────────────────────────────────────────────────────
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          architecture: 'x64'
+          # architecture is always x64 on the runner; QEMU handles the
+          # cross-build inside build.sh / appimagetool for aarch64.
 
-      - name: Install dependencies
+      # ── System dependencies ───────────────────────────────────────────────
+      - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-tk libfuse2
-          pip install python-appimage cairosvg
+          sudo apt-get install -y \
+            python3-pyqt6 \
+            libgl1 \
+            libxcb-cursor0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-xinerama0 \
+            libfuse2
 
+      # ── Python build tools ────────────────────────────────────────────────
+      - name: Install Python build tools
+        run: pip install python-appimage cairosvg PyQt6
+
+      # ── appimagetool (arch-specific binary) ───────────────────────────────
       - name: Install appimagetool
         run: |
-          sudo wget -O /usr/local/bin/appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          TOOL_ARCH="${{ matrix.arch == 'aarch64' && 'aarch64' || 'x86_64' }}"
+          sudo wget -q -O /usr/local/bin/appimagetool \
+            "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${TOOL_ARCH}.AppImage"
           sudo chmod +x /usr/local/bin/appimagetool
 
+      # ── AppImage ──────────────────────────────────────────────────────────
       - name: Build AppImage
         env:
           ARCH: ${{ matrix.arch }}
         run: |
           chmod +x build.sh
-          ./build.sh ${{ github.ref_name }}
+          ./build.sh "${{ github.ref_name }}"
 
+      # ── nfpm (.deb / .rpm) ────────────────────────────────────────────────
       - name: Install nfpm
         run: |
-          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          echo "deb [trusted=yes] https://repo.goreleaser.com/apt/ /" \
+            | sudo tee /etc/apt/sources.list.d/goreleaser.list
+          sudo apt-get update
+          sudo apt-get install -y nfpm
 
-      - name: Build Native Packages (.deb, .rpm)
+      - name: Build .deb and .rpm
         env:
-          ARCH: ${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}
-          VERSION: ${{ github.ref_name }}
+          # nfpm uses amd64/arm64 for deb, x86_64/aarch64 for rpm
+          DEB_ARCH: ${{ matrix.arch == 'aarch64' && 'arm64' || 'amd64' }}
+          RPM_ARCH: ${{ matrix.arch }}
+          VERSION:  ${{ github.ref_name }}
         run: |
-          VERSION=${VERSION#v} nfpm pkg --packager deb --target .
-          VERSION=${VERSION#v} nfpm pkg --packager rpm --target .
+          STRIPPED="${VERSION#v}"
+          ARCH="${DEB_ARCH}" VERSION="${STRIPPED}" nfpm package -p deb -f nfpm.yaml
+          ARCH="${RPM_ARCH}" VERSION="${STRIPPED}" nfpm package -p rpm -f nfpm.yaml
 
-      - name: Install Cloudsmith CLI
-        run: |
-          pip install --upgrade cloudsmith-cli
-
+      # ── Cloudsmith ────────────────────────────────────────────────────────
       - name: Push to Cloudsmith
         env:
           CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
         run: |
-          # Push Debian package
+          pip install --quiet cloudsmith-cli
           cloudsmith push deb a-issaoui/porkill/any-distro/any-version porkill_*.deb
-          # Push RPM package
           cloudsmith push rpm a-issaoui/porkill/any-distro/any-version porkill-*.rpm
 
+      # ── Snap (x86_64 only — Snap Store does not accept cross-built snaps) ─
       - name: Build Snap
+        if: matrix.arch == 'x86_64'
         uses: snapcore/action-build@v1
         with:
           path: .
 
-      - name: Release
+      - name: Push Snap to Store
+        if: matrix.arch == 'x86_64' && secrets.SNAP_STORE_TOKEN != ''
+        uses: snapcore/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_STORE_TOKEN }}
+        with:
+          snap: ${{ steps.snap-build.outputs.snap }}
+          release: stable
+
+      # ── GitHub Release ────────────────────────────────────────────────────
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
             porkill-*.AppImage
             porkill_*.deb
             porkill-*.rpm
-            *.snap
-            com.github.a_issaoui.porkill.yml
-            com.github.a_issaoui.porkill.metainfo.xml
+            ${{ matrix.arch == 'x86_64' && '*.snap' || '' }}
           generate_release_notes: true
           draft: false
-          prerelease: false
+          prerelease: ${{ contains(github.ref_name, '-') }}

@@ -4,10 +4,12 @@ platform: "linux"
 version: "${VERSION}"
 section: "utils"
 priority: "optional"
-maintainer: "a-issaoui <your-email@example.com>"
+maintainer: "a-issaoui <a.issaoui@aol.co.uk>"
 description: |
-  A cyberpunk-themed GUI for monitoring and killing processes by port.
-  Zero dependencies, pure Python stdlib. Features matrix rain animation.
+  A cyberpunk-themed PyQt6 GUI for monitoring and killing processes by port.
+  Reads directly from /proc/net/ with ss and netstat fallbacks. Features
+  real-time filtering, process grouping, container runtime detection, and
+  dual-mode SIGTERM/SIGKILL with privilege elevation via pkexec/sudo.
 vendor: "a-issaoui"
 homepage: "https://github.com/a-issaoui/porkill"
 license: "MIT"
@@ -24,13 +26,15 @@ contents:
     dst: "/usr/share/icons/hicolor/scalable/apps/porkill.svg"
   - src: "porkill.png"
     dst: "/usr/share/icons/hicolor/256x256/apps/porkill.png"
+  - src: "com.github.a_issaoui.porkill.metainfo.xml"
+    dst: "/usr/share/metainfo/com.github.a_issaoui.porkill.metainfo.xml"
 
 overrides:
   deb:
     depends:
-      - python3
-      - python3-tk
+      - python3 (>= 3.9)
+      - python3-pyqt6
   rpm:
     depends:
-      - python3
-      - python3-tkinter
+      - python3 >= 3.9
+      - python3-qt6

@@ -1,2 +1,8 @@
-# porkill has no third-party dependencies.
-# It uses only Python stdlib: tkinter, subprocess, threading, signal, socket, struct, pathlib, re, os
+pytest
+# porkill runtime dependency
+PyQt6>=6.4.0
+
+# PyQt6 pulls in PyQt6-Qt6 and PyQt6-sip automatically.
+# No other third-party packages are required — everything else
+# uses the Python standard library (subprocess, threading, signal,
+# socket, struct, pathlib, re, os, json, dataclasses, enum).

@@ -1,8 +1,9 @@
 id: com.github.a_issaoui.porkill
 runtime: org.gnome.Platform
-runtime-version: '45'
+runtime-version: '47'
 sdk: org.gnome.Sdk
-command: porkill
+command: porkill-launcher
+
 finish-args:
   - --share=network
   - --share=ipc
@@ -12,19 +13,46 @@ finish-args:
   - --device=all
   - --allow=multiarch
   - --talk-name=org.freedesktop.Notifications
-  # Access to /proc/net/ and killing processes
-  - --filesystem=host-os:ro
   - --talk-name=org.freedesktop.Flatpak
+  # Read-only access to /proc/net/ for port discovery
+  - --filesystem=host-os:ro
+  # Allow sending signals to host processes via pkexec/sudo
+  - --talk-name=org.freedesktop.PolicyKit1
 
 modules:
+
+  # ── PyQt6 via pip inside the Flatpak build ───────────────────────────────
+  - name: PyQt6
+    buildsystem: simple
+    build-commands:
+      - pip3 install --prefix=/app --no-build-isolation PyQt6>=6.4.0
+    sources:
+      - type: shell
+        commands: []   # pip fetches from PyPI at build time
+
+  # ── porkill application ──────────────────────────────────────────────────
   - name: porkill
     buildsystem: simple
     build-commands:
-      - install -D porkill.py /app/bin/porkill
-      - install -D porkill.desktop /app/share/applications/com.github.a_issaoui.porkill.desktop
-      - install -D assets/porkill.svg /app/share/icons/hicolor/scalable/apps/com.github.a_issaoui.porkill.svg
-      - install -D porkill.png /app/share/icons/hicolor/256x256/apps/porkill.png
-      - install -D com.github.a_issaoui.porkill.metainfo.xml /app/share/metainfo/com.github.a_issaoui.porkill.metainfo.xml
+      # Main application script — installed as a Python module (not directly
+      # exec'd) to avoid shebang/interpreter path issues inside the sandbox.
+      - install -Dm644 porkill.py /app/lib/porkill/porkill.py
+      - install -Dm644 entrypoint.py /app/lib/porkill/entrypoint.py
+
+      # Launcher wrapper — resolves the exec issue with .py files in Flatpak
+      - |
+        cat > /app/bin/porkill-launcher << 'EOF'
+        #!/bin/bash
+        exec python3 /app/lib/porkill/entrypoint.py "$@"
+        EOF
+      - chmod +x /app/bin/porkill-launcher
+
+      # Desktop integration
+      - install -Dm644 porkill.desktop /app/share/applications/com.github.a_issaoui.porkill.desktop
+      - install -Dm644 assets/porkill.svg /app/share/icons/hicolor/scalable/apps/com.github.a_issaoui.porkill.svg
+      - install -Dm644 porkill.png /app/share/icons/hicolor/256x256/apps/com.github.a_issaoui.porkill.png
+      - install -Dm644 com.github.a_issaoui.porkill.metainfo.xml /app/share/metainfo/com.github.a_issaoui.porkill.metainfo.xml
+
     sources:
       - type: dir
         path: .

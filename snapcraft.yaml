@@ -1,11 +1,16 @@
 name: porkill
 base: core22
 adopt-info: porkill
-summary: A cyberpunk-themed GUI for monitoring and killing processes by port.
+summary: A cyberpunk-themed PyQt6 GUI for monitoring and killing processes by port.
 description: |
   Porkill is a Linux desktop application for visualising every open network port
   alongside the process that owns it — and killing it with one click.
-  It features a neon cyberpunk aesthetic with a live matrix-rain animation header.
+
+  It reads directly from /proc/net/ with no external tools required, falling back
+  to ss (JSON or legacy) or netstat when available. Features include real-time
+  debounced filtering, process grouping, container runtime detection (Docker,
+  Podman, containerd), dual-mode SIGTERM/SIGKILL, and privilege elevation via
+  pkexec or sudo. Built with Python 3 and PyQt6.
 
 grade: stable
 confinement: strict
@@ -25,14 +30,25 @@ parts:
   porkill:
     plugin: python
     source: .
+    python-packages:
+      - PyQt6
     stage-packages:
-      - python3-tk
+      - libgl1
+      - libxcb-cursor0
+      - libxcb-icccm4
+      - libxcb-image0
+      - libxcb-keysyms1
+      - libxcb-randr0
+      - libxcb-render-util0
+      - libxcb-xinerama0
     override-build: |
       craftctl default
-      craftctl set-version $(cat VERSION)
-      mkdir -p $CRAFT_PART_INSTALL/usr/share/applications
-      mkdir -p $CRAFT_PART_INSTALL/usr/share/icons/hicolor/scalable/apps
-      mkdir -p $CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps
-      cp porkill.desktop $CRAFT_PART_INSTALL/usr/share/applications/
-      cp assets/porkill.svg $CRAFT_PART_INSTALL/usr/share/icons/hicolor/scalable/apps/porkill.svg
-      cp porkill.png $CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps/porkill.png
+      craftctl set-version "$(cat VERSION)"
+      mkdir -p "$CRAFT_PART_INSTALL/usr/share/applications"
+      mkdir -p "$CRAFT_PART_INSTALL/usr/share/icons/hicolor/scalable/apps"
+      mkdir -p "$CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps"
+      mkdir -p "$CRAFT_PART_INSTALL/usr/share/metainfo"
+      cp porkill.desktop "$CRAFT_PART_INSTALL/usr/share/applications/"
+      cp assets/porkill.svg "$CRAFT_PART_INSTALL/usr/share/icons/hicolor/scalable/apps/porkill.svg"
+      cp porkill.png "$CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps/porkill.png"
+      cp com.github.a_issaoui.porkill.metainfo.xml "$CRAFT_PART_INSTALL/usr/share/metainfo/"

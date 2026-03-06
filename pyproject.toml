@@ -6,23 +6,28 @@ build-backend = "setuptools.build_meta"
 name = "porkill"
 dynamic = ["version"]
 authors = [
-  { name="a-issaoui", email="your-email@example.com" },
+  { name="a-issaoui", email="a.issaoui@aol.co.uk" },
 ]
-description = "A cyberpunk-themed GUI for monitoring and killing processes by port"
+description = "A cyberpunk-themed PyQt6 GUI for monitoring and killing Linux processes by port"
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
-    "Environment :: X11 Applications",
+    "Environment :: X11 Applications :: Qt",
+    "Topic :: System :: Monitoring",
     "Topic :: System :: Networking :: Monitoring",
+    "Topic :: System :: Systems Administration",
 ]
-dependencies = []
+dependencies = [
+    "PyQt6>=6.4.0",
+]
 
 [project.urls]
-"Homepage" = "https://github.com/a-issaoui/porkill"
+"Homepage"    = "https://github.com/a-issaoui/porkill"
 "Bug Tracker" = "https://github.com/a-issaoui/porkill/issues"
+"Changelog"   = "https://github.com/a-issaoui/porkill/releases"
 
 [project.scripts]
 porkill = "porkill:main"
@@ -32,3 +37,9 @@ py-modules = ["porkill"]
 
 [tool.setuptools.dynamic]
 version = {file = "VERSION"}
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+
+[tool.coverage.run]
+source = ["porkill"]

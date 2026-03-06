@@ -7,18 +7,80 @@
   <summary>A cyberpunk-themed GUI for monitoring and killing processes by port</summary>
   <description>
     <p>
-      Porkill is a Linux desktop application for visualising every open network port alongside the process that owns it — and killing it with one click.
-      It reads directly from /proc/net/ with no external tools required, though it falls back to ss or netstat when available.
-      The UI is built with tkinter and styled in a neon cyberpunk aesthetic with a live matrix-rain animation header.
+      Porkill is a Linux desktop application for visualising every open network port
+      alongside the process that owns it — and killing it with one click.
     </p>
+    <p>
+      It reads directly from /proc/net/ with no external tools required, falling back
+      to ss (JSON or legacy mode) or netstat when available. The fastest working method
+      is cached automatically for subsequent refreshes.
+    </p>
+    <ul>
+      <li>Real-time port and process monitoring with debounced live filtering</li>
+      <li>Process grouping — batch-kill all ports owned by a process in one action</li>
+      <li>Container runtime detection: Docker, Podman, containerd, crun, runc, buildah</li>
+      <li>Dual-mode kill: graceful SIGTERM or force SIGKILL -9, with PID-reuse safety check</li>
+      <li>Privilege elevation via pkexec or sudo with a styled confirmation dialog</li>
+      <li>Neon cyberpunk dark theme with semantic colour coding per protocol and state</li>
+    </ul>
   </description>
+
   <launchable type="desktop-id">com.github.a_issaoui.porkill.desktop</launchable>
+
   <screenshots>
     <screenshot type="default">
-      <caption>Main Interface</caption>
-      <image>https://raw.githubusercontent.com/a-issaoui/porkill/master/banner.svg</image>
+      <caption>Main interface — real-time port monitor with process grouping</caption>
+      <image>https://raw.githubusercontent.com/a-issaoui/porkill/master/assets/screenshot.png</image>
     </screenshot>
   </screenshots>
+
+  <releases>
+    <release version="2.0.3" date="2026-03-06">
+      <description>
+        <p>Full rewrite from Tkinter to PyQt6. Major improvements:</p>
+        <ul>
+          <li>QThreadPool + QRunnable worker architecture for non-blocking UI</li>
+          <li>Versioned fetch-generation guard prevents stale worker side-effects</li>
+          <li>Batch tree insertion for smooth rendering at 2 000+ rows</li>
+          <li>lru_cache port formatter and sort key — zero per-row allocation</li>
+          <li>Smart tooltip that flips above/below the hovered row</li>
+          <li>os.scandir-based inode map — 2–3× faster than Path.iterdir</li>
+          <li>Container runtime ancestry cache</li>
+          <li>IntEnum column indices for type-safe tree access</li>
+        </ul>
+      </description>
+    </release>
+    <release version="2.0.0" date="2025-06-01">
+      <description>
+        <p>Production hardening: multi-PID group kill, PID reuse mitigation,
+        debounced background filtering, and stable application lifecycle.</p>
+      </description>
+    </release>
+  </releases>
+
   <url type="homepage">https://github.com/a-issaoui/porkill</url>
+  <url type="bugtracker">https://github.com/a-issaoui/porkill/issues</url>
+
   <developer_name>a-issaoui</developer_name>
+
+  <provides>
+    <binary>porkill</binary>
+  </provides>
+
+  <categories>
+    <category>System</category>
+    <category>Monitor</category>
+    <category>Network</category>
+  </categories>
+
+  <keywords>
+    <keyword>port</keyword>
+    <keyword>process</keyword>
+    <keyword>monitor</keyword>
+    <keyword>kill</keyword>
+    <keyword>network</keyword>
+    <keyword>sysadmin</keyword>
+  </keywords>
+
+  <content_rating type="oars-1.1" />
 </component>
