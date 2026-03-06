@@ -97,8 +97,8 @@ jobs:
           CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
         run: |
           pip install --quiet cloudsmith-cli
-          cloudsmith push deb a-issaoui/porkill/any-distro/any-version porkill_*.deb
-          cloudsmith push rpm a-issaoui/porkill/any-distro/any-version porkill-*.rpm
+          cloudsmith push deb a-issaoui/porkill/any-distro/any-version porkill_*.deb --republish
+          cloudsmith push rpm a-issaoui/porkill/any-distro/any-version porkill-*.rpm --republish
 
       # ── Snap (x86_64 only — Snap Store does not accept cross-built snaps) ─
       - name: Build Snap
