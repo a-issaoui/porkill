@@ -11,6 +11,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SNAP_STORE_TOKEN: ${{ secrets.SNAP_STORE_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -108,7 +110,7 @@ jobs:
           path: .
 
       - name: Push Snap to Store
-        if: matrix.arch == 'x86_64' && secrets.SNAP_STORE_TOKEN != ''
+        if: matrix.arch == 'x86_64' && env.SNAP_STORE_TOKEN != ''
         uses: snapcore/action-publish@v1
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_STORE_TOKEN }}
