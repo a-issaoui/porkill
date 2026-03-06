@@ -37,4 +37,4 @@ overrides:
   rpm:
     depends:
       - python3 >= 3.9
-      - python3-qt6
+      - python3-pyqt6
