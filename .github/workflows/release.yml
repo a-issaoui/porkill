@@ -57,12 +57,11 @@ jobs:
       - name: Install Python build tools
         run: pip install python-appimage cairosvg PyQt6
 
-      # ── appimagetool (arch-specific binary) ───────────────────────────────
+      # ── appimagetool ──────────────────────────────────────────────────────
       - name: Install appimagetool
         run: |
-          TOOL_ARCH="${{ matrix.arch == 'aarch64' && 'aarch64' || 'x86_64' }}"
           sudo wget -q -O /usr/local/bin/appimagetool \
-            "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${TOOL_ARCH}.AppImage"
+            "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
           sudo chmod +x /usr/local/bin/appimagetool
 
       # ── AppImage ──────────────────────────────────────────────────────────
