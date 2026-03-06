@@ -43,7 +43,7 @@ parts:
       - libxcb-xinerama0
     override-build: |
       craftctl default
-      craftctl set-version "$(cat VERSION)"
+      craftctl set version="$(cat VERSION)"
       mkdir -p "$CRAFT_PART_INSTALL/usr/share/applications"
       mkdir -p "$CRAFT_PART_INSTALL/usr/share/icons/hicolor/scalable/apps"
       mkdir -p "$CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps"
