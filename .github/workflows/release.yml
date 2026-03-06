@@ -101,6 +101,7 @@ jobs:
       # ── Snap (x86_64 only — Snap Store does not accept cross-built snaps) ─
       - name: Build Snap
         if: matrix.arch == 'x86_64'
+        id: snap-build
         uses: snapcore/action-build@v1
         with:
           path: .
