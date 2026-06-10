@@ -18,6 +18,7 @@ Keyboard Shortcuts:
     Ctrl+R / F5    Refresh
     Delete         Send SIGTERM to selected process
     Ctrl+K         Send SIGKILL to selected process
+    Ctrl+C         Copy selected PID(s) to clipboard
     Ctrl+F         Focus filter input
     Escape         Clear selection
     Ctrl+Q         Quit
@@ -2117,6 +2118,48 @@ class PorkillWindow(QMainWindow):
         ]:
             QShortcut(QKeySequence(key), self).activated.connect(fn)  # type: ignore[union-attr]
 
+        # Ctrl+C copies the selected PID(s). Scoped to the tree so it never
+        # shadows the filter field's native text-copy when that field has focus.
+        copy_sc = QShortcut(QKeySequence("Ctrl+C"), self.tree)
+        copy_sc.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        copy_sc.activated.connect(self._copy_selection)  # type: ignore[union-attr]
+
+    def _copy_selection(self) -> None:
+        """Copy the selected process PID(s) to the clipboard.
+
+        A single row copies its PID; a group header copies all of its members'
+        PIDs (space-separated). Kernel/empty selections copy nothing.
+        """
+        items = self.tree.selectedItems()
+        if not items:
+            self._flash_status("NOTHING TO COPY")
+            return
+        item = items[0]
+        pids: List[str] = []
+        if item.data(_COL_PID, _ROLE_IS_GROUP):
+            seen: Set[str] = set()
+            for i in range(item.childCount()):
+                row: PortRow = _require(item.child(i)).data(_COL_PID, _ROLE_ROW_DATA)
+                if row and row.pid not in ("—", "") and row.pid not in seen:
+                    pids.append(row.pid)
+                    seen.add(row.pid)
+        else:
+            row = item.data(_COL_PID, _ROLE_ROW_DATA)
+            if row and row.pid not in ("—", ""):
+                pids = [row.pid]
+
+        if not pids:
+            self._flash_status("NOTHING TO COPY")
+            return
+        text = " ".join(pids)
+        clipboard = QApplication.clipboard()
+        if clipboard is None:
+            self._flash_status("CLIPBOARD UNAVAILABLE")
+            return
+        clipboard.setText(text)
+        label = f"COPIED PID {text}" if len(pids) == 1 else f"COPIED {len(pids)} PIDS"
+        self._flash_status(f"{label} ✓")
+
     def _focus_filter(self) -> None:
         self._filter_edit.setFocus()
         self._filter_edit.selectAll()
@@ -2719,8 +2762,9 @@ def parse_arguments() -> argparse.Namespace:
         epilog="""
 Keyboard Shortcuts:
   Ctrl+R / F5    Refresh          Delete      SIGTERM selected
-  Ctrl+K         SIGKILL selected  Ctrl+F      Focus filter
-  Escape         Clear selection   Ctrl+Q      Quit
+  Ctrl+K         SIGKILL selected  Ctrl+C      Copy PID(s)
+  Ctrl+F         Focus filter      Escape      Clear selection
+  Ctrl+Q         Quit
         """,
     )
     parser.add_argument("--interval",       "-i", type=int, default=2,

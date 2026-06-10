@@ -77,6 +77,9 @@ class _Qt:
     class ScrollBarPolicy:
         ScrollBarAlwaysOff = 1
 
+    class ShortcutContext:
+        WidgetWithChildrenShortcut = 3
+
     class CursorShape:
         PointingHandCursor = 1
 
@@ -596,6 +599,17 @@ class _QApplication:
     @staticmethod
     def screenAt(pt): return _Screen()
 
+    @staticmethod
+    def clipboard(): return _CLIPBOARD
+
+
+class _Clipboard:
+    def __init__(self): self.text_value = ""
+    def setText(self, t): self.text_value = t
+
+
+_CLIPBOARD = _Clipboard()
+
 
 class _Screen:
     def availableGeometry(self): return _QRect(0, 0, 1920, 1080)
@@ -672,6 +686,7 @@ class _QFontDatabase:
 
 class _QShortcut:
     def __init__(self, k, p): self.activated = _Sig()
+    def setContext(self, ctx): pass
 
 
 class _QSizePolicy:
@@ -2130,6 +2145,67 @@ class TestMain:
             mock_app_cls.screenAt = lambda p: _Screen()
             main()
         assert logging.root.level == logging.DEBUG
+
+
+# ===========================================================================
+# Copy selection to clipboard (Ctrl+C)
+# ===========================================================================
+
+class TestCopySelection:
+    def _make_window(self, **kw):
+        import argparse
+        args = argparse.Namespace(
+            interval=2, max_rows=2000, no_auto_refresh=True,
+            log_level="WARNING", debug=False, version=False,
+        )
+        args.__dict__.update(kw)
+        return PorkillWindow(args)
+
+    def _row_item(self, pid="1234"):
+        from porkill import _ROLE_IS_GROUP, _ROLE_ROW_DATA, _COL_PID
+        item = _QTreeWidgetItem()
+        item.setData(_COL_PID, _ROLE_IS_GROUP, False)
+        item.setData(_COL_PID, _ROLE_ROW_DATA, _make_row(pid=pid))
+        return item
+
+    def test_copy_nothing_selected(self):
+        win = self._make_window()
+        win.tree._sel = []
+        _CLIPBOARD.text_value = ""
+        win._copy_selection()
+        assert _CLIPBOARD.text_value == ""
+        assert "NOTHING TO COPY" in win._status_lbl.text()
+
+    def test_copy_single_row(self):
+        win = self._make_window()
+        win.tree._sel = [self._row_item("4321")]
+        _CLIPBOARD.text_value = ""
+        win._copy_selection()
+        assert _CLIPBOARD.text_value == "4321"
+        assert "COPIED PID 4321" in win._status_lbl.text()
+
+    def test_copy_kernel_row_copies_nothing(self):
+        win = self._make_window()
+        win.tree._sel = [self._row_item("—")]
+        _CLIPBOARD.text_value = ""
+        win._copy_selection()
+        assert _CLIPBOARD.text_value == ""
+        assert "NOTHING TO COPY" in win._status_lbl.text()
+
+    def test_copy_group_joins_unique_pids(self):
+        from porkill import _ROLE_IS_GROUP, _ROLE_ROW_DATA, _COL_PID
+        win = self._make_window()
+        group = _QTreeWidgetItem()
+        group.setData(_COL_PID, _ROLE_IS_GROUP, True)
+        for pid in ("1234", "1234", "5678"):  # duplicate should be de-duped
+            child = _QTreeWidgetItem()
+            child.setData(_COL_PID, _ROLE_ROW_DATA, _make_row(pid=pid))
+            group.addChild(child)
+        win.tree._sel = [group]
+        _CLIPBOARD.text_value = ""
+        win._copy_selection()
+        assert _CLIPBOARD.text_value == "1234 5678"
+        assert "COPIED 2 PIDS" in win._status_lbl.text()
 
 
 # ===========================================================================

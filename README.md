@@ -137,6 +137,7 @@ sudo porkill [options]
 | `Ctrl+F` | Focus filter input |
 | `Delete` | Send SIGTERM to selected process |
 | `Ctrl+K` | Send SIGKILL to selected process |
+| `Ctrl+C` | Copy selected PID(s) to clipboard |
 | `Escape` | Clear selection |
 | `Ctrl+Q` | Quit |
 
