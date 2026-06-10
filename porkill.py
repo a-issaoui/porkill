@@ -13,6 +13,7 @@ Options:
     --log-level LEVEL     Logging level: DEBUG, INFO, WARNING, ERROR (default: WARNING)
     --debug               Enable DEBUG logging (alias for --log-level DEBUG)
     --version             Show program version and exit
+    --list                Print the port table to stdout and exit (no GUI)
 
 Keyboard Shortcuts:
     Ctrl+R / F5    Refresh
@@ -2870,7 +2871,36 @@ Keyboard Shortcuts:
         help="Enable DEBUG logging")
     parser.add_argument("--version",        "-v", action="store_true",
         help="Show version and exit")
+    parser.add_argument("--list",           "-L", action="store_true",
+        help="Print the port table to stdout and exit (no GUI)")
     return parser.parse_args()
+
+
+def print_port_list(fetcher: Optional["PortDataFetcher"] = None) -> int:
+    """Headless mode: fetch ports and print a plain-text table to stdout.
+
+    Returns a process exit code (0 ok, 1 on fetch failure). Used by --list so
+    porkill is scriptable and usable on servers with no display.
+    """
+    fetcher = fetcher or PortDataFetcher()
+    rows, error = fetcher.fetch()
+    if error:
+        print(f"porkill: {error}", file=sys.stderr)
+        return 1
+    if not rows:
+        print("No active ports found.")
+        return 0
+    ordered = sorted(rows, key=lambda r: _port_sort_key(r.port))
+    header = (f"{'PID':>7}  {'PROTO':<5}  {'ADDRESS':<22}  {'PORT':>5}  "
+              f"{'STATE':<11}  {'USER':<10}  PROCESS")
+    print(header)
+    print("-" * len(header))
+    for r in ordered:
+        pid  = r.pid if r.pid != "—" else "-"
+        addr = fmt_addr(r.addr)[:22]
+        print(f"{pid:>7}  {r.proto:<5}  {addr:<22}  {r.port:>5}  "
+              f"{r.state[:11]:<11}  {get_proc_user(r.pid)[:10]:<10}  {get_proc_cmd(r.pid)}")
+    return 0
 
 
 # ============================================================================
@@ -2888,6 +2918,10 @@ def main() -> int:
         return 0
 
     setup_logging(getattr(logging, "DEBUG" if args.debug else args.log_level))
+
+    # Headless list mode — no GUI, no elevation prompt, no QApplication.
+    if args.list:
+        return print_port_list()
 
     # ── Wayland window-positioning workaround ────────────────────────────────
     # Wayland compositors do not honour move() by design — applications cannot

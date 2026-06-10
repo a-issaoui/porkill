@@ -826,6 +826,7 @@ from porkill import (
     PortDataFetcher, PortRow, Config, _VERSION_RE,
     validate_pid, send_signal_to_pid,
     _parse_query, _row_matches_terms,
+    print_port_list,
     build_stylesheet,
     _FetchTask, _FilterTask, FetchSignals, FilterSignals,
     _accent_line, StatBadge, KillButton, LogoBanner,
@@ -1371,6 +1372,53 @@ class TestRowMatchesTerms:
         r = self._row(name="nginx", proto="TCP")
         assert _row_matches_terms(r, _parse_query("nginx proto:tcp"))
         assert not _row_matches_terms(r, _parse_query("nginx proto:udp"))
+
+
+# ===========================================================================
+# Headless --list mode
+# ===========================================================================
+
+class _FakeFetcher:
+    def __init__(self, rows, error=None): self._rows = rows; self._error = error
+    def fetch(self): return (self._rows, self._error)
+
+
+class TestPrintPortList:
+    def test_fetch_error_returns_1(self, capsys):
+        rc = print_port_list(_FakeFetcher([], error="boom"))
+        assert rc == 1
+        assert "boom" in capsys.readouterr().err
+
+    def test_empty_returns_0(self, capsys):
+        rc = print_port_list(_FakeFetcher([]))
+        assert rc == 0
+        assert "No active ports" in capsys.readouterr().out
+
+    def test_prints_table(self, capsys):
+        rows = [
+            _make_row(pid="1234", name="nginx", proto="TCP", port="80", state="LISTEN"),
+            _make_row(pid="5678", name="sshd", proto="TCP", port="22", state="LISTEN"),
+        ]
+        rc = print_port_list(_FakeFetcher(rows))
+        out = capsys.readouterr().out
+        assert rc == 0
+        assert "PID" in out and "PROTO" in out and "PROCESS" in out
+        assert "1234" in out and "80" in out
+        assert "5678" in out and "22" in out
+
+    def test_sorted_by_port(self, capsys):
+        rows = [
+            _make_row(pid="1", name="a", port="443", state="LISTEN"),
+            _make_row(pid="2", name="b", port="22", state="LISTEN"),
+        ]
+        print_port_list(_FakeFetcher(rows))
+        out = capsys.readouterr().out
+        assert out.index("  22  ") < out.index(" 443  ")
+
+    def test_list_flag_parsed(self):
+        with patch("sys.argv", ["porkill", "--list"]):
+            args = parse_arguments()
+        assert args.list is True
 
 
 # ===========================================================================
