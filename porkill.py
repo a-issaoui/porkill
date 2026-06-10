@@ -1273,7 +1273,7 @@ class KillButton(QPushButton):
     def __init__(self, text: str, color: str, parent: QWidget) -> None:
         super().__init__(text, parent)
         self._color = color
-        self.setFixedSize(210, 34)
+        self.setFixedSize(168, 34)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet(f"""
             QPushButton {{
@@ -1798,7 +1798,6 @@ class PorkillWindow(QMainWindow):
         self._status_lbl:   QLabel
         self.tree:          QTreeWidget
         self._info_lbl:     QLabel
-        self._hint_lbl:     QLabel
         self._term_btn:     KillButton
         self._kill_btn:     KillButton
         self._shown_once:   bool = False
@@ -2050,13 +2049,6 @@ class PorkillWindow(QMainWindow):
         self._info_lbl.setStyleSheet(f"color: {Config.FG2}; font-size: 8pt;")
         h.addWidget(self._info_lbl)
 
-        self._hint_lbl = QLabel(
-            "    ·    Del  SIGTERM    Ctrl+K  SIGKILL    Esc  clear", bar
-        )
-        self._hint_lbl.setObjectName("hint")
-        self._hint_lbl.setVisible(False)
-        h.addWidget(self._hint_lbl)
-
         h.addStretch()
 
         # ── Centre: privilege indicator ──────────────────────────────────
@@ -2083,12 +2075,14 @@ class PorkillWindow(QMainWindow):
 
         # ── Right: kill buttons ──────────────────────────────────────────
         self._term_btn = KillButton("SIGTERM  graceful", Config.AMBER, bar)
+        self._term_btn.setToolTip("Shortcut:  Del")
         self._term_btn.clicked.connect(lambda: self._kill(signal.SIGTERM))  # type: ignore[union-attr]
         self._term_btn.setVisible(False)
         h.addWidget(self._term_btn)
         h.addSpacing(6)
 
         self._kill_btn = KillButton("SIGKILL  force −9", Config.RED, bar)
+        self._kill_btn.setToolTip("Shortcut:  Ctrl+K")
         self._kill_btn.clicked.connect(lambda: self._kill(signal.SIGKILL))  # type: ignore[union-attr]
         self._kill_btn.setVisible(False)
         h.addWidget(self._kill_btn)
@@ -2117,7 +2111,6 @@ class PorkillWindow(QMainWindow):
         self._selected_key = self._selected_group = None
         self._info_lbl.setText("no selection")
         self._info_lbl.setStyleSheet(f"color: {Config.FG2}; font-size: 8pt;")
-        self._hint_lbl.setVisible(False)
         self._term_btn.setVisible(False)
         self._kill_btn.setVisible(False)
 
@@ -2499,7 +2492,6 @@ class PorkillWindow(QMainWindow):
             self._selected_key = self._selected_group = None
             self._info_lbl.setText("no selection")
             self._info_lbl.setStyleSheet(f"color: {Config.FG2}; font-size: 8pt;")
-            self._hint_lbl.setVisible(False)
             self._term_btn.setVisible(False)
             self._kill_btn.setVisible(False)
 
@@ -2523,7 +2515,6 @@ class PorkillWindow(QMainWindow):
             self._selected_key = self._selected_group = None
             self._info_lbl.setText("no selection")
             self._info_lbl.setStyleSheet(f"color: {Config.FG2}; font-size: 8pt;")
-            self._hint_lbl.setVisible(False)
             self._term_btn.setVisible(False)
             self._kill_btn.setVisible(False)
             return
@@ -2542,13 +2533,11 @@ class PorkillWindow(QMainWindow):
                     f"group  {name}  ·  pid {pid}  ·  all ports"
                 )
                 self._info_lbl.setStyleSheet(f"color: {Config.NEON}; font-size: 8pt;")
-                self._hint_lbl.setVisible(True)
                 self._term_btn.setVisible(True)
                 self._kill_btn.setVisible(True)
             else:
                 self._info_lbl.setText("no selection")
                 self._info_lbl.setStyleSheet(f"color: {Config.FG2}; font-size: 8pt;")
-                self._hint_lbl.setVisible(False)
                 self._term_btn.setVisible(False)
                 self._kill_btn.setVisible(False)
         else:
@@ -2564,7 +2553,6 @@ class PorkillWindow(QMainWindow):
                 self._info_lbl.setStyleSheet(
                     f"color: {Config.NEON if can_kill else Config.FG2}; font-size: 8pt;"
                 )
-                self._hint_lbl.setVisible(can_kill)
                 self._term_btn.setVisible(can_kill)
                 self._kill_btn.setVisible(can_kill)
 
