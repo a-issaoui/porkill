@@ -2025,8 +2025,12 @@ class TestMain:
                     app_inst = MagicMock()
                     app_inst.primaryScreen.return_value = _Screen()
                     mock_app_cls.return_value = app_inst
-                    mock_app_cls.primaryScreen = staticmethod(lambda: _Screen())
-                    mock_app_cls.screenAt = staticmethod(lambda p: _Screen())
+                    # Plain lambdas, not staticmethod(): a staticmethod object is
+                    # only directly callable on Python 3.10+, so assigning one to a
+                    # MagicMock attribute breaks under 3.9 ('staticmethod' object is
+                    # not callable). A lambda is callable on every version.
+                    mock_app_cls.primaryScreen = lambda: _Screen()
+                    mock_app_cls.screenAt = lambda p: _Screen()
                     app_inst.exec.return_value = 0
                     result = main()
         assert result == 0
@@ -2038,8 +2042,10 @@ class TestMain:
                 patch("porkill.QApplication") as mock_app_cls, \
                 patch("porkill.PorkillWindow"):
             mock_app_cls.return_value.exec.return_value = 0
-            mock_app_cls.primaryScreen = staticmethod(lambda: _Screen())
-            mock_app_cls.screenAt = staticmethod(lambda p: _Screen())
+            # Plain lambdas (callable on all versions) — see note in
+            # test_main_launches_app; staticmethod objects break under 3.9.
+            mock_app_cls.primaryScreen = lambda: _Screen()
+            mock_app_cls.screenAt = lambda p: _Screen()
             main()
         assert logging.root.level == logging.DEBUG
 
