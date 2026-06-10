@@ -70,3 +70,12 @@ ignore = [
 # the test harness injects Qt mocks into sys.modules before importing porkill,
 # so its imports legitimately come after setup code.
 "test_porkill.py" = ["E402", "SIM117"]
+
+[tool.mypy]
+# Type-check the application module. The test module is intentionally excluded:
+# it defines loose Qt mock shims that are not meant to satisfy the real stubs.
+# python_version is 3.10 (mypy's minimum target); the 3.9 *runtime* is still
+# exercised by the pytest matrix.
+python_version = "3.10"
+files = ["porkill.py"]
+warn_redundant_casts = true

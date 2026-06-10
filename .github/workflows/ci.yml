@@ -29,6 +29,21 @@ jobs:
       - name: Ruff check
         run: ruff check --output-format=github .
 
+  typecheck:
+    name: Type check (mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install mypy and PyQt6
+        # PyQt6 ships .pyi stubs that mypy needs to resolve Qt types.
+        run: pip install mypy==2.1.0 PyQt6
+      - name: Mypy check
+        run: mypy
+
   test:
     name: Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest

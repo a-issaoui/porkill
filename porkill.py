@@ -43,7 +43,7 @@ import time
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set, Tuple, TypeVar
 
 # ============================================================================
 # Logging
@@ -61,6 +61,20 @@ def setup_logging(level: int = logging.WARNING) -> None:
         logging.root.setLevel(level)
 
 logger = logging.getLogger("porkill")
+
+_T = TypeVar("_T")
+
+
+def _require(obj: Optional[_T]) -> _T:
+    """Return obj, asserting it is not None.
+
+    Several Qt accessors (QTreeWidget.header()/viewport(), QTreeWidgetItem.child())
+    are typed Optional in the PyQt6 stubs but are never None at our call sites
+    (the widgets are fully constructed). This makes that invariant explicit so the
+    type checker keeps full union-attr coverage instead of us suppressing it.
+    """
+    assert obj is not None
+    return obj
 
 # ============================================================================
 # PyQt6 Import
@@ -1946,7 +1960,7 @@ class PorkillWindow(QMainWindow):
         self.tree.setColumnCount(len(_COLUMNS))
         self.tree.setHeaderLabels([c[0] for c in _COLUMNS])
 
-        hdr = self.tree.header()
+        hdr = _require(self.tree.header())
         hdr.setSortIndicatorShown(True)
         hdr.setSectionsClickable(True)
         hdr.sectionClicked.connect(self._on_header_clicked)  # type: ignore[union-attr]
@@ -1964,12 +1978,13 @@ class PorkillWindow(QMainWindow):
 
         # Install event filter on the viewport to catch resize + tooltip events
         self.tree.installEventFilter(self)
-        self.tree.viewport().installEventFilter(self)
+        vp = _require(self.tree.viewport())
+        vp.installEventFilter(self)
         # No horizontal scrollbar — last col stretches, no overflow possible
         self.tree.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         # Explicitly set viewport background — prevents white area showing through
-        self.tree.viewport().setStyleSheet(f"background: {Config.BG2};")
-        self.tree.viewport().setAutoFillBackground(True)
+        vp.setStyleSheet(f"background: {Config.BG2};")
+        vp.setAutoFillBackground(True)
 
         self.tree.itemSelectionChanged.connect(self._on_selection_changed)  # type: ignore[union-attr]
         self.tree.itemDoubleClicked.connect(  # type: ignore[union-attr]
@@ -1988,10 +2003,10 @@ class PorkillWindow(QMainWindow):
 
     def _apply_column_proportions(self) -> None:
         """Set fixed-column widths as percentages of viewport; CMD col auto-stretches."""
-        vp_w = self.tree.viewport().width()
+        vp_w = _require(self.tree.viewport()).width()
         if vp_w < 100:
             return
-        hdr = self.tree.header()
+        hdr = _require(self.tree.header())
         # Apply proportions to all columns except the last (CMD) which is Stretch-managed
         for i, pct in enumerate(self._COL_PCT[:-1]):
             w = max(_COL_MIN_WIDTHS[i], int(vp_w * pct))
@@ -2013,7 +2028,7 @@ class PorkillWindow(QMainWindow):
             tip  = item.toolTip(col) if item else ""
 
             if tip:
-                vp        = self.tree.viewport()
+                vp        = _require(self.tree.viewport())
                 ir        = self.tree.visualItemRect(item)
                 col_x     = sum(self.tree.columnWidth(c) for c in range(col))
                 col_w     = self.tree.columnWidth(col)
@@ -2563,7 +2578,7 @@ class PorkillWindow(QMainWindow):
             self._sort_col = col
             self._sort_asc = True
         order = Qt.SortOrder.AscendingOrder if self._sort_asc else Qt.SortOrder.DescendingOrder
-        self.tree.header().setSortIndicator(col, order)
+        _require(self.tree.header()).setSortIndicator(col, order)
         self._do_apply_filter()
 
     # ── Kill ─────────────────────────────────────────────────────────────────
@@ -2583,7 +2598,7 @@ class PorkillWindow(QMainWindow):
             display_name = item.data(_COL_PID, _ROLE_GROUP_NAME) or ""
             seen_pids: Set[str] = set()
             for i in range(item.childCount()):
-                child = item.child(i)
+                child = _require(item.child(i))
                 row: PortRow = child.data(_COL_PID, _ROLE_ROW_DATA)
                 if row and row.pid not in ("—", "") and row.pid not in seen_pids:
                     targets.append((row.pid, row.name))
