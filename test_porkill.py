@@ -2014,6 +2014,7 @@ class TestMain:
     def test_main_launches_app(self):
         with patch("sys.argv", ["porkill"]), \
                 patch("porkill._check_pyqt6"), \
+                patch("porkill.os.geteuid", return_value=0), \
                 patch("porkill.QApplication", _QApplication), \
                 patch("porkill.PorkillWindow") as mock_win:
             win_inst = MagicMock()
@@ -2033,6 +2034,7 @@ class TestMain:
     def test_main_respects_debug_flag(self):
         with patch("sys.argv", ["porkill", "--debug"]), \
                 patch("porkill._check_pyqt6"), \
+                patch("porkill.os.geteuid", return_value=0), \
                 patch("porkill.QApplication") as mock_app_cls, \
                 patch("porkill.PorkillWindow"):
             mock_app_cls.return_value.exec.return_value = 0
