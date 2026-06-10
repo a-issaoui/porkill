@@ -43,3 +43,30 @@ testpaths = ["."]
 
 [tool.coverage.run]
 source = ["porkill"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+# Real bug-catching rules. isort (I) is intentionally NOT enabled: the PyQt6
+# imports are deliberately placed after the _check_pyqt6() runtime guard and
+# must not be hoisted to the top of the module.
+select = ["E", "F", "W", "B", "SIM"]
+ignore = [
+    "E701",   # compact one-line guards (`if age < 5: return ...`) are intentional
+    "E702",   # compact semicolon assignments in hot color/brush setup are intentional
+    "E703",   # trailing semicolons match the codebase's compact style
+    "E731",   # lambda sort-keys are clearer inline than a def in this context
+    "E741",   # short throwaway UI locals (l = QLabel(...))
+    "E501",   # long lines are mostly Qt stylesheet strings
+    "SIM105", # explicit try/except/pass reads clearer than contextlib.suppress here
+    "B008",   # Qt default-argument patterns
+]
+
+[tool.ruff.lint.per-file-ignores]
+# entrypoint sets sys.path before importing porkill (AppImage layout).
+"entrypoint.py" = ["E402"]
+# the test harness injects Qt mocks into sys.modules before importing porkill,
+# so its imports legitimately come after setup code.
+"test_porkill.py" = ["E402", "SIM117"]

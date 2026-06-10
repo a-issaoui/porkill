@@ -5,7 +5,8 @@
 
 
 
-[![Version](https://img.shields.io/badge/VERSION-v2.0.3-39ff14?style=for-the-badge&labelColor=080c08)](https://github.com/a-issaoui/porkill/releases)
+[![CI](https://img.shields.io/github/actions/workflow/status/a-issaoui/porkill/ci.yml?branch=master&style=for-the-badge&labelColor=080c08&label=CI)](https://github.com/a-issaoui/porkill/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/VERSION-v3.0.0-39ff14?style=for-the-badge&labelColor=080c08)](https://github.com/a-issaoui/porkill/releases)
 [![Platform](https://img.shields.io/badge/PLATFORM-LINUX-00ffcc?style=for-the-badge&labelColor=080c08)](#)
 [![UI](https://img.shields.io/badge/UI-PyQt6-00e5ff?style=for-the-badge&labelColor=080c08)](#-installation)
 [![License](https://img.shields.io/badge/LICENSE-MIT-ff00ff?style=for-the-badge&labelColor=080c08)](LICENSE)

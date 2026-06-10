@@ -10,15 +10,13 @@ import importlib
 import importlib.machinery
 import json
 import logging
-import os
 import signal
 import subprocess
 import sys
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-from unittest.mock import MagicMock, Mock, patch, mock_open, call, PropertyMock
+from unittest.mock import MagicMock, patch, mock_open
 
 import pytest
 
@@ -786,12 +784,9 @@ from porkill import (
     get_proc_user, get_proc_cmd, get_proc_cmd_full,
     get_parent_pid, find_container_runtime,
     enrich_process_name, resolve_group_name,
-    PortDataFetcher, PortRow, ProcessInfo, InodeCacheEntry,
-    Config, _TCP_STATES, _HELPER_NAMES, _CONTAINER_RUNTIMES,
-    _ADDR_MAP, _STATE_DISPLAY_MAP, _VERSION_RE,
-    validate_pid, send_signal_to_pid, build_stylesheet,
+    PortDataFetcher, PortRow, Config, _VERSION_RE,
+    build_stylesheet,
     _FetchTask, _FilterTask, FetchSignals, FilterSignals,
-    _fmt_port, _port_sort_key,
     _accent_line, StatBadge, KillButton, LogoBanner,
     ElevationDialog, SmartTooltip, PorkillWindow,
     parse_arguments, main,
@@ -2128,7 +2123,7 @@ class TestKillWithSelection:
             dlg_inst = MagicMock();
             dlg_inst.exec.return_value = 0
             MockDlg.return_value = dlg_inst
-            with patch("porkill.send_signal_to_pid", return_value=(True, "")) as mock_kill:
+            with patch("porkill.send_signal_to_pid", return_value=(True, "")):
                 win._kill(signal.SIGTERM)
 
     def test_kill_elevation_dialog_yes(self):
