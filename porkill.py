@@ -2451,6 +2451,27 @@ class PorkillWindow(QMainWindow):
                 # Batch-insert all children under this group header in one call
                 grp_item.addChildren(children)
 
+            # ── Empty state ───────────────────────────────────────────────────
+            # When nothing is visible (no ports at all, or the filter excludes
+            # everything) show a clear, centered message instead of a blank pane.
+            if not top_items:
+                query = self._filter_edit.text().strip()
+                if query:
+                    empty_msg = f"No processes match  '{query}'      ( Esc to clear filter )"
+                else:
+                    empty_msg = "No active ports found      ( Ctrl+R to refresh )"
+                empty_item = QTreeWidgetItem()
+                empty_item.setFlags(Qt.ItemFlag.NoItemFlags)
+                empty_item.setText(0, empty_msg)
+                empty_item.setForeground(0, QBrush(c_fg2))
+                empty_item.setBackground(0, QBrush(c_bg2))
+                empty_item.setSizeHint(0, QSize(0, 80))
+                empty_item.setTextAlignment(0, _center)
+                empty_item.setFont(0, QFont(self._mono_font, 10))
+                empty_item.setChildIndicatorPolicy(
+                    QTreeWidgetItem.ChildIndicatorPolicy.DontShowIndicator)
+                top_items.append(empty_item)
+
             # Single batch insert of all top-level items — one Qt signal instead of N
             self.tree.addTopLevelItems(top_items)
 
