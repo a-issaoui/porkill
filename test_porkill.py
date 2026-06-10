@@ -826,7 +826,7 @@ from porkill import (
     PortDataFetcher, PortRow, Config, _VERSION_RE,
     validate_pid, send_signal_to_pid,
     _parse_query, _row_matches_terms,
-    print_port_list,
+    print_port_list, print_port_json,
     build_stylesheet,
     _FetchTask, _FilterTask, FetchSignals, FilterSignals,
     _accent_line, StatBadge, KillButton, LogoBanner,
@@ -1419,6 +1419,45 @@ class TestPrintPortList:
         with patch("sys.argv", ["porkill", "--list"]):
             args = parse_arguments()
         assert args.list is True
+
+
+class TestPrintPortJson:
+    def test_fetch_error_returns_1(self, capsys):
+        rc = print_port_json(_FakeFetcher([], error="boom"))
+        assert rc == 1
+        assert "boom" in capsys.readouterr().err
+
+    def test_empty_is_empty_array(self, capsys):
+        rc = print_port_json(_FakeFetcher([]))
+        assert rc == 0
+        assert json.loads(capsys.readouterr().out) == []
+
+    def test_valid_json_structure(self, capsys):
+        rows = [_make_row(pid="1234", name="nginx", proto="TCP",
+                          addr="0.0.0.0", port="80", state="LISTEN")]
+        rc = print_port_json(_FakeFetcher(rows))
+        data = json.loads(capsys.readouterr().out)
+        assert rc == 0
+        assert isinstance(data, list) and len(data) == 1
+        entry = data[0]
+        assert entry["pid"] == 1234            # numeric
+        assert entry["port"] == 80             # numeric
+        assert entry["name"] == "nginx"
+        assert entry["proto"] == "TCP"
+        assert entry["address"] == "0.0.0.0"
+        assert entry["state"] == "LISTEN"
+        assert "user" in entry and "cmd" in entry
+
+    def test_kernel_pid_is_null(self, capsys):
+        rows = [_make_row(pid="—", name="kernel", proto="UDP", port="68", state="—")]
+        print_port_json(_FakeFetcher(rows))
+        data = json.loads(capsys.readouterr().out)
+        assert data[0]["pid"] is None
+
+    def test_json_flag_parsed(self):
+        with patch("sys.argv", ["porkill", "--json"]):
+            args = parse_arguments()
+        assert args.json is True
 
 
 # ===========================================================================

@@ -14,6 +14,7 @@ Options:
     --debug               Enable DEBUG logging (alias for --log-level DEBUG)
     --version             Show program version and exit
     --list                Print the port table to stdout and exit (no GUI)
+    --json                Print the port list as JSON to stdout and exit (no GUI)
 
 Keyboard Shortcuts:
     Ctrl+R / F5    Refresh
@@ -2873,6 +2874,8 @@ Keyboard Shortcuts:
         help="Show version and exit")
     parser.add_argument("--list",           "-L", action="store_true",
         help="Print the port table to stdout and exit (no GUI)")
+    parser.add_argument("--json",           "-j", action="store_true",
+        help="Print the port list as JSON to stdout and exit (no GUI)")
     return parser.parse_args()
 
 
@@ -2903,6 +2906,35 @@ def print_port_list(fetcher: Optional["PortDataFetcher"] = None) -> int:
     return 0
 
 
+def print_port_json(fetcher: Optional["PortDataFetcher"] = None) -> int:
+    """Headless mode: fetch ports and print them as JSON to stdout.
+
+    Emits a JSON array of objects (pid/name/proto/address/port/state/user/cmd),
+    suitable for piping into jq or a monitoring pipeline. Returns a process exit
+    code (0 ok, 1 on fetch failure).
+    """
+    fetcher = fetcher or PortDataFetcher()
+    rows, error = fetcher.fetch()
+    if error:
+        print(f"porkill: {error}", file=sys.stderr)
+        return 1
+    out = [
+        {
+            "pid":     None if r.pid == "—" else (int(r.pid) if r.pid.isdigit() else r.pid),
+            "name":    r.name,
+            "proto":   r.proto,
+            "address": r.addr,
+            "port":    int(r.port) if r.port.isdigit() else r.port,
+            "state":   r.state,
+            "user":    get_proc_user(r.pid),
+            "cmd":     get_proc_cmd(r.pid),
+        }
+        for r in sorted(rows, key=lambda r: _port_sort_key(r.port))
+    ]
+    print(json.dumps(out, indent=2))
+    return 0
+
+
 # ============================================================================
 # Main
 # ============================================================================
@@ -2919,7 +2951,9 @@ def main() -> int:
 
     setup_logging(getattr(logging, "DEBUG" if args.debug else args.log_level))
 
-    # Headless list mode — no GUI, no elevation prompt, no QApplication.
+    # Headless output modes — no GUI, no elevation prompt, no QApplication.
+    if args.json:
+        return print_port_json()
     if args.list:
         return print_port_list()
 

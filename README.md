@@ -125,6 +125,7 @@ sudo porkill [options]
 | `--debug`, `-d` | off | Shorthand for `--log-level DEBUG` |
 | `--version`, `-v` | — | Print version and exit |
 | `--list`, `-L` | — | Print the port table to stdout and exit (no GUI — scriptable / headless) |
+| `--json`, `-j` | — | Print the port list as JSON to stdout and exit (pipe into `jq`) |
 
 > [!IMPORTANT]
 > For best responsiveness on lower-end hardware, keep `--max-rows` ≤ 3 000. Filtering and sorting run on a background thread; the initial UI redraw for large row counts is the main bottleneck.
