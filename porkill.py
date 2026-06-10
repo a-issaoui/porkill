@@ -15,6 +15,7 @@ Options:
     --version             Show program version and exit
     --list                Print the port table to stdout and exit (no GUI)
     --json                Print the port list as JSON to stdout and exit (no GUI)
+    --csv                 Print the port list as CSV to stdout and exit (no GUI)
 
 Keyboard Shortcuts:
     Ctrl+R / F5    Refresh
@@ -31,6 +32,7 @@ GitHub: github.com/a-issaoui
 from __future__ import annotations
 
 import argparse
+import csv
 import functools
 import json
 import logging
@@ -2876,6 +2878,8 @@ Keyboard Shortcuts:
         help="Print the port table to stdout and exit (no GUI)")
     parser.add_argument("--json",           "-j", action="store_true",
         help="Print the port list as JSON to stdout and exit (no GUI)")
+    parser.add_argument("--csv",            "-c", action="store_true",
+        help="Print the port list as CSV to stdout and exit (no GUI)")
     return parser.parse_args()
 
 
@@ -2935,6 +2939,28 @@ def print_port_json(fetcher: Optional["PortDataFetcher"] = None) -> int:
     return 0
 
 
+def print_port_csv(fetcher: Optional["PortDataFetcher"] = None) -> int:
+    """Headless mode: fetch ports and write CSV to stdout (for spreadsheets).
+
+    Columns: pid,name,proto,address,port,state,user,cmd. Kernel rows have an
+    empty pid. Returns a process exit code (0 ok, 1 on fetch failure).
+    """
+    fetcher = fetcher or PortDataFetcher()
+    rows, error = fetcher.fetch()
+    if error:
+        print(f"porkill: {error}", file=sys.stderr)
+        return 1
+    writer = csv.writer(sys.stdout)
+    writer.writerow(["pid", "name", "proto", "address", "port", "state", "user", "cmd"])
+    for r in sorted(rows, key=lambda r: _port_sort_key(r.port)):
+        writer.writerow([
+            "" if r.pid == "—" else r.pid,
+            r.name, r.proto, r.addr, r.port, r.state,
+            get_proc_user(r.pid), get_proc_cmd(r.pid),
+        ])
+    return 0
+
+
 # ============================================================================
 # Main
 # ============================================================================
@@ -2954,6 +2980,8 @@ def main() -> int:
     # Headless output modes — no GUI, no elevation prompt, no QApplication.
     if args.json:
         return print_port_json()
+    if args.csv:
+        return print_port_csv()
     if args.list:
         return print_port_list()
 

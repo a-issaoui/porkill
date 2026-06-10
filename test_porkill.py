@@ -826,7 +826,7 @@ from porkill import (
     PortDataFetcher, PortRow, Config, _VERSION_RE,
     validate_pid, send_signal_to_pid,
     _parse_query, _row_matches_terms,
-    print_port_list, print_port_json,
+    print_port_list, print_port_json, print_port_csv,
     build_stylesheet,
     _FetchTask, _FilterTask, FetchSignals, FilterSignals,
     _accent_line, StatBadge, KillButton, LogoBanner,
@@ -1458,6 +1458,45 @@ class TestPrintPortJson:
         with patch("sys.argv", ["porkill", "--json"]):
             args = parse_arguments()
         assert args.json is True
+
+
+class TestPrintPortCsv:
+    def test_fetch_error_returns_1(self, capsys):
+        rc = print_port_csv(_FakeFetcher([], error="boom"))
+        assert rc == 1
+        assert "boom" in capsys.readouterr().err
+
+    def test_header_only_when_empty(self, capsys):
+        import csv
+        import io
+        rc = print_port_csv(_FakeFetcher([]))
+        rows = list(csv.reader(io.StringIO(capsys.readouterr().out)))
+        assert rc == 0
+        assert rows == [["pid", "name", "proto", "address", "port", "state", "user", "cmd"]]
+
+    def test_writes_rows(self, capsys):
+        import csv
+        import io
+        data = [_make_row(pid="1234", name="nginx", proto="TCP",
+                          addr="0.0.0.0", port="80", state="LISTEN")]
+        rc = print_port_csv(_FakeFetcher(data))
+        rows = list(csv.reader(io.StringIO(capsys.readouterr().out)))
+        assert rc == 0
+        assert rows[0][:6] == ["pid", "name", "proto", "address", "port", "state"]
+        assert rows[1][0] == "1234" and rows[1][1] == "nginx" and rows[1][4] == "80"
+
+    def test_kernel_pid_blank(self, capsys):
+        import csv
+        import io
+        data = [_make_row(pid="—", name="kernel", proto="UDP", port="68", state="—")]
+        print_port_csv(_FakeFetcher(data))
+        rows = list(csv.reader(io.StringIO(capsys.readouterr().out)))
+        assert rows[1][0] == ""   # kernel pid blank
+
+    def test_csv_flag_parsed(self):
+        with patch("sys.argv", ["porkill", "--csv"]):
+            args = parse_arguments()
+        assert args.csv is True
 
 
 # ===========================================================================
