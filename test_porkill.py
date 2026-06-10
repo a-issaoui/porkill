@@ -1900,6 +1900,31 @@ class TestPorkillWindow:
         win = self._make_window()
         win._rebuild_tree([], None, None)
 
+    def test_rebuild_tree_empty_shows_empty_state(self):
+        """With no rows and no filter, a single empty-state item is rendered."""
+        win = self._make_window()
+        win._filter_edit.setText("")
+        win._rebuild_tree([], None, None)
+        assert win.tree.topLevelItemCount() == 1
+        assert "No active ports" in win.tree._items[0].text(0)
+
+    def test_rebuild_tree_empty_with_filter_mentions_query(self):
+        """When a filter excludes everything, the empty state names the query."""
+        win = self._make_window()
+        win._filter_edit.setText("zzznomatch")
+        win._rebuild_tree([], None, None)
+        assert win.tree.topLevelItemCount() == 1
+        msg = win.tree._items[0].text(0)
+        assert "zzznomatch" in msg and "match" in msg
+
+    def test_rebuild_tree_with_rows_has_no_empty_state(self):
+        """Non-empty results must not render the empty-state placeholder."""
+        win = self._make_window()
+        win._filter_edit.setText("")
+        win._rebuild_tree([_make_row(pid="1234", name="nginx", group="nginx")], None, None)
+        for item in win.tree._items:
+            assert "No active ports" not in item.text(0)
+
     def test_do_apply_filter_submits_task(self):
         win = self._make_window()
         with patch.object(win._thread_pool, "start") as mock_start:
