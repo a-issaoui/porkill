@@ -342,7 +342,7 @@ from PyQt6.QtWidgets import (                                              # noq
     QLabel, QLineEdit, QPushButton, QCheckBox, QSpinBox,
     QTreeWidget, QTreeWidgetItem, QHeaderView,
     QFrame, QSizePolicy,
-    QMessageBox, QAbstractItemView,
+    QMessageBox, QAbstractItemView, QMenu,
 )
 
 # ============================================================================
@@ -1124,6 +1124,19 @@ QMessageBox QPushButton {{
 }}
 QMessageBox QPushButton:hover   {{ border-color: {c.NEON_DIM}; color: {c.NEON_GLOW}; }}
 QMessageBox QPushButton:pressed {{ background: {c.NEON}; color: {c.BG}; }}
+
+/* ── Context menu — match dark theme ──────────────────────────────── */
+QMenu {{
+    background: {c.BG2}; color: {c.FG};
+    border: 1px solid {c.NEON_DIM}; padding: 4px;
+}}
+QMenu::item {{
+    padding: 5px 24px 5px 14px; background: transparent;
+    font-size: 8pt; letter-spacing: 1px;
+}}
+QMenu::item:selected {{ background: {c.BG4}; color: {c.NEON}; }}
+QMenu::item:disabled {{ color: {c.FG3}; }}
+QMenu::separator {{ height: 1px; background: {c.BORDER}; margin: 4px 8px; }}
 
 /* ── Tooltip — match dark theme ───────────────────────────────────── */
 QToolTip {{
@@ -1994,6 +2007,9 @@ class PorkillWindow(QMainWindow):
         )
         self.tree.itemCollapsed.connect(self._on_item_collapsed)  # type: ignore[union-attr]
         self.tree.itemExpanded.connect(self._on_item_expanded)  # type: ignore[union-attr]
+        # Right-click context menu (Copy / SIGTERM / SIGKILL)
+        self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self._show_context_menu)  # type: ignore[union-attr]
         # Remove any internal margin that leaves a void gap above the footer
         self.tree.setContentsMargins(0, 0, 0, 0)
         return self.tree
@@ -2159,6 +2175,37 @@ class PorkillWindow(QMainWindow):
         clipboard.setText(text)
         label = f"COPIED PID {text}" if len(pids) == 1 else f"COPIED {len(pids)} PIDS"
         self._flash_status(f"{label} ✓")
+
+    def _show_context_menu(self, pos: QPoint) -> None:
+        """Right-click menu on a row/group: copy PID(s) or send a signal."""
+        item = self.tree.itemAt(pos)
+        if item is None:
+            return
+        # Select the right-clicked item so the actions operate on it.
+        self.tree.setCurrentItem(item)
+
+        if item.data(_COL_PID, _ROLE_IS_GROUP):
+            can_kill = any(
+                (r := _require(item.child(i)).data(_COL_PID, _ROLE_ROW_DATA))
+                and r.pid not in ("—", "")
+                for i in range(item.childCount())
+            )
+        else:
+            row = item.data(_COL_PID, _ROLE_ROW_DATA)
+            can_kill = bool(row and row.pid not in ("—", ""))
+
+        menu = QMenu(self.tree)
+        copy_act = _require(menu.addAction("Copy PID(s)"))
+        copy_act.triggered.connect(lambda: self._copy_selection())  # type: ignore[union-attr]
+        copy_act.setEnabled(can_kill)
+        menu.addSeparator()
+        term_act = _require(menu.addAction("SIGTERM  ·  graceful"))
+        term_act.triggered.connect(lambda: self._kill(signal.SIGTERM))  # type: ignore[union-attr]
+        term_act.setEnabled(can_kill)
+        kill_act = _require(menu.addAction("SIGKILL  ·  force −9"))
+        kill_act.triggered.connect(lambda: self._kill(signal.SIGKILL))  # type: ignore[union-attr]
+        kill_act.setEnabled(can_kill)
+        menu.exec(_require(self.tree.viewport()).mapToGlobal(pos))
 
     def _focus_filter(self) -> None:
         self._filter_edit.setFocus()

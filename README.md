@@ -43,6 +43,7 @@
 | **📂 Process Grouping** | Automatically groups related ports under their parent process for batch operations. |
 | **📦 Container Aware** | Native detection for **Docker**, **Podman**, **containerd**, **crun**, **runc**, **buildah**, and more. |
 | **💀 Dual-Mode Kill** | Graceful `SIGTERM` or ruthless `SIGKILL -9` with PID-reuse safety check before sending. |
+| **🖱️ Right-click Menu** | Context menu on any row/group: copy PID(s) to clipboard, send `SIGTERM` or `SIGKILL`. |
 | **⚡ Smart Filtering** | 150 ms debounced live search across PID, Name, Port, Protocol, Address, and State — runs on a background thread. |
 | **🎨 Neon Aesthetics** | Full dark theme with neon green / cyan / amber semantic colour coding and per-protocol badge cells. |
 | **🛡️ Hybrid Elevation** | Styled GUI prompt for root access; falls back to CLI; escalates via `pkexec` then `sudo`. |

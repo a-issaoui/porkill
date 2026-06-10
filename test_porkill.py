@@ -80,6 +80,9 @@ class _Qt:
     class ShortcutContext:
         WidgetWithChildrenShortcut = 3
 
+    class ContextMenuPolicy:
+        CustomContextMenu = 1
+
     class CursorShape:
         PointingHandCursor = 1
 
@@ -526,6 +529,9 @@ class _QTreeWidget(_QWidget):
         self.itemDoubleClicked = _Sig()
         self.itemCollapsed = _Sig()
         self.itemExpanded = _Sig()
+        self.customContextMenuRequested = _Sig()
+
+    def setContextMenuPolicy(self, p): pass
 
     def setAlternatingRowColors(self, v): pass
 
@@ -679,6 +685,23 @@ class _QMessageBox:
     def question(p, t, tx, b, d): return _QMessageBox.StandardButton.Yes
 
 
+class _QAction:
+    def __init__(self, text=""): self.text = text; self.triggered = _Sig(); self.enabled = True
+    def setEnabled(self, v): self.enabled = v
+
+
+class _QMenu:
+    last = None
+    def __init__(self, parent=None):
+        self.actions = []
+        self.exec_called = False
+        _QMenu.last = self
+    def addAction(self, text):
+        a = _QAction(text); self.actions.append(a); return a
+    def addSeparator(self): pass
+    def exec(self, pos=None): self.exec_called = True; return None
+
+
 class _QFontDatabase:
     @staticmethod
     def families(): return ["JetBrains Mono", "Monospace", "Courier New"]
@@ -765,6 +788,7 @@ _wid.QFrame = _QFrame
 _wid.QSizePolicy = _QSizePolicy
 _wid.QMessageBox = _QMessageBox
 _wid.QAbstractItemView = _QAbstractItemView
+_wid.QMenu = _QMenu
 
 import porkill  # noqa: E402
 
@@ -787,7 +811,7 @@ for _name, _obj in [
     ("QTreeWidget", _QTreeWidget), ("QTreeWidgetItem", _QTreeWidgetItem),
     ("QHeaderView", _QHeaderView), ("QFrame", _QFrame),
     ("QSizePolicy", _QSizePolicy), ("QMessageBox", _QMessageBox),
-    ("QAbstractItemView", _QAbstractItemView),
+    ("QAbstractItemView", _QAbstractItemView), ("QMenu", _QMenu),
 ]:
     setattr(_pk, _name, _obj)
 
@@ -2206,6 +2230,57 @@ class TestCopySelection:
         win._copy_selection()
         assert _CLIPBOARD.text_value == "1234 5678"
         assert "COPIED 2 PIDS" in win._status_lbl.text()
+
+
+# ===========================================================================
+# Right-click context menu
+# ===========================================================================
+
+class TestContextMenu:
+    def _make_window(self, **kw):
+        import argparse
+        args = argparse.Namespace(
+            interval=2, max_rows=2000, no_auto_refresh=True,
+            log_level="WARNING", debug=False, version=False,
+        )
+        args.__dict__.update(kw)
+        return PorkillWindow(args)
+
+    def _row_item(self, pid="1234"):
+        from porkill import _ROLE_IS_GROUP, _ROLE_ROW_DATA, _COL_PID
+        item = _QTreeWidgetItem()
+        item.setData(_COL_PID, _ROLE_IS_GROUP, False)
+        item.setData(_COL_PID, _ROLE_ROW_DATA, _make_row(pid=pid))
+        return item
+
+    def test_no_item_builds_no_menu(self):
+        win = self._make_window()
+        win.tree.itemAt = lambda pos: None
+        _QMenu.last = None
+        win._show_context_menu(_QPoint(0, 0))
+        assert _QMenu.last is None
+
+    def test_row_builds_three_enabled_actions(self):
+        win = self._make_window()
+        item = self._row_item("4321")
+        win.tree.itemAt = lambda pos: item
+        win._show_context_menu(_QPoint(5, 5))
+        menu = _QMenu.last
+        assert menu is not None and menu.exec_called
+        texts = [a.text for a in menu.actions]
+        assert texts[0] == "Copy PID(s)"
+        assert any("SIGTERM" in t for t in texts)
+        assert any("SIGKILL" in t for t in texts)
+        assert all(a.enabled for a in menu.actions)
+
+    def test_kernel_row_disables_actions(self):
+        win = self._make_window()
+        item = self._row_item("—")
+        win.tree.itemAt = lambda pos: item
+        win._show_context_menu(_QPoint(5, 5))
+        menu = _QMenu.last
+        assert menu is not None and menu.exec_called
+        assert all(not a.enabled for a in menu.actions)
 
 
 # ===========================================================================
