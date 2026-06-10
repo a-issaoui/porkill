@@ -785,6 +785,7 @@ from porkill import (
     get_parent_pid, find_container_runtime,
     enrich_process_name, resolve_group_name,
     PortDataFetcher, PortRow, Config, _VERSION_RE,
+    validate_pid, send_signal_to_pid,
     build_stylesheet,
     _FetchTask, _FilterTask, FetchSignals, FilterSignals,
     _accent_line, StatBadge, KillButton, LogoBanner,
@@ -1217,6 +1218,62 @@ class TestResolveGroupNameReal:
         with patch("porkill.find_container_runtime", return_value=None):
             result = resolve_group_name("1234", "slirp4netns")
         assert result == "slirp4netns"
+
+
+# ===========================================================================
+# validate_pid / send_signal_to_pid  (process-kill safety logic)
+# ===========================================================================
+
+class TestValidatePid:
+    def test_rejects_non_digit(self):
+        ok, pid, err = validate_pid("abc")
+        assert ok is False and pid == 0 and "Invalid PID" in err
+
+    def test_rejects_empty(self):
+        ok, _pid, err = validate_pid("")
+        assert ok is False and "Invalid PID" in err
+
+    def test_rejects_non_positive(self):
+        ok, _pid, err = validate_pid("0")
+        assert ok is False and "positive" in err
+
+    def test_accepts_valid(self):
+        ok, pid, err = validate_pid("1234")
+        assert ok is True and pid == 1234 and err == ""
+
+
+class TestSendSignalToPid:
+    def test_invalid_pid_returns_error(self):
+        ok, err = send_signal_to_pid("nope", signal.SIGTERM)
+        assert ok is False and "Invalid PID" in err
+
+    def test_success(self):
+        with patch("porkill.os.kill") as mock_kill:
+            ok, err = send_signal_to_pid("1234", signal.SIGTERM)
+        assert ok is True and err == ""
+        mock_kill.assert_called_once_with(1234, signal.SIGTERM)
+
+    def test_process_lookup_error(self):
+        with patch("porkill.os.kill", side_effect=ProcessLookupError):
+            ok, err = send_signal_to_pid("1234", signal.SIGKILL)
+        assert ok is False and "no longer exists" in err
+
+    def test_permission_denied_non_root(self):
+        with patch("porkill.os.kill", side_effect=PermissionError), \
+                patch("porkill.os.geteuid", return_value=1000):
+            ok, err = send_signal_to_pid("1234", signal.SIGTERM)
+        assert ok is False and "sudo" in err
+
+    def test_permission_denied_as_root(self):
+        with patch("porkill.os.kill", side_effect=PermissionError), \
+                patch("porkill.os.geteuid", return_value=0):
+            ok, err = send_signal_to_pid("1234", signal.SIGTERM)
+        assert ok is False and "even as root" in err
+
+    def test_generic_oserror(self):
+        with patch("porkill.os.kill", side_effect=OSError("boom")):
+            ok, err = send_signal_to_pid("1234", signal.SIGTERM)
+        assert ok is False and "boom" in err
 
 
 # ===========================================================================
