@@ -825,6 +825,7 @@ from porkill import (
     enrich_process_name, resolve_group_name,
     PortDataFetcher, PortRow, Config, _VERSION_RE,
     validate_pid, send_signal_to_pid,
+    _parse_query, _row_matches_terms,
     build_stylesheet,
     _FetchTask, _FilterTask, FetchSignals, FilterSignals,
     _accent_line, StatBadge, KillButton, LogoBanner,
@@ -1313,6 +1314,63 @@ class TestSendSignalToPid:
         with patch("porkill.os.kill", side_effect=OSError("boom")):
             ok, err = send_signal_to_pid("1234", signal.SIGTERM)
         assert ok is False and "boom" in err
+
+
+# ===========================================================================
+# Filter query parsing (substring + field:value, AND-ed)
+# ===========================================================================
+
+class TestParseQuery:
+    def test_plain_term(self):
+        assert _parse_query("nginx") == [(None, "nginx")]
+
+    def test_field_term(self):
+        assert _parse_query("port:8080") == [("port", "8080")]
+
+    def test_field_aliases(self):
+        assert _parse_query("process:nginx") == [("name", "nginx")]
+        assert _parse_query("address:127") == [("addr", "127")]
+
+    def test_unknown_field_is_plain(self):
+        assert _parse_query("foo:bar") == [(None, "foo:bar")]
+
+    def test_empty_value_is_plain(self):
+        assert _parse_query("port:") == [(None, "port:")]
+
+    def test_multiple_terms(self):
+        assert _parse_query("proto:udp 53") == [("proto", "udp"), (None, "53")]
+
+
+class TestRowMatchesTerms:
+    def _row(self, **kw):
+        base = dict(pid="1234", name="nginx", proto="TCP", addr="0.0.0.0",
+                    port="8080", state="LISTEN", group="nginx")
+        base.update(kw)
+        return PortRow(**base)
+
+    def test_plain_substring_any_field(self):
+        r = self._row()
+        assert _row_matches_terms(r, _parse_query("ngin"))
+        assert _row_matches_terms(r, _parse_query("8080"))
+        assert not _row_matches_terms(r, _parse_query("zzz"))
+
+    def test_field_scoped(self):
+        r = self._row(port="8080", name="nginx")
+        assert _row_matches_terms(r, _parse_query("port:8080"))
+        assert _row_matches_terms(r, _parse_query("port:80"))      # substring of "8080"
+        assert not _row_matches_terms(r, _parse_query("port:9999"))
+        assert _row_matches_terms(r, _parse_query("proto:tcp"))
+        assert not _row_matches_terms(r, _parse_query("proto:udp"))
+
+    def test_field_does_not_leak_across_columns(self):
+        r = self._row(port="8080", name="3000svc")
+        # "name:8080" should NOT match because 8080 is in port, not name
+        assert not _row_matches_terms(r, _parse_query("name:8080"))
+
+    def test_terms_are_anded(self):
+        r = self._row(name="nginx", proto="TCP")
+        assert _row_matches_terms(r, _parse_query("nginx proto:tcp"))
+        assert not _row_matches_terms(r, _parse_query("nginx proto:udp"))
 
 
 # ===========================================================================

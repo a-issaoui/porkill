@@ -731,6 +731,53 @@ def _port_sort_key(port: str) -> Tuple[int, int]:
     return (0, int(port)) if port.isdigit() else (1, 0)
 
 
+# ── Filter query parsing ──────────────────────────────────────────────────────
+# Supports field-scoped terms (e.g. "port:8080", "proto:udp") combined with
+# plain substring terms; multiple whitespace-separated terms are AND-ed.
+_FILTER_FIELDS: Dict[str, str] = {
+    "pid": "pid",
+    "name": "name", "process": "name", "proc": "name",
+    "proto": "proto", "protocol": "proto",
+    "addr": "addr", "address": "addr",
+    "port": "port",
+    "state": "state",
+}
+
+
+def _parse_query(query: str) -> List[Tuple[Optional[str], str]]:
+    """Split a lowercased query into (field_attr | None, value) terms.
+
+    "port:8080 nginx" -> [("port", "8080"), (None, "nginx")]
+    A token whose prefix is not a known field (or with an empty value) is
+    treated as a plain substring term, so ordinary queries are unchanged.
+    """
+    terms: List[Tuple[Optional[str], str]] = []
+    for tok in query.split():
+        field, sep, val = tok.partition(":")
+        if sep and val and field in _FILTER_FIELDS:
+            terms.append((_FILTER_FIELDS[field], val))
+        else:
+            terms.append((None, tok))
+    return terms
+
+
+def _row_matches_terms(row: PortRow, terms: List[Tuple[Optional[str], str]]) -> bool:
+    """True if the row satisfies every term (AND). Field terms match one column;
+    plain terms match any column. Caller lowercases the query."""
+    for attr, val in terms:
+        if attr is None:
+            if not (val in row.pid or val in row.name.lower() or
+                    val in row.proto.lower() or val in row.addr.lower() or
+                    val in row.port or val in row.state.lower()):
+                return False
+        else:
+            field_val = getattr(row, attr)
+            if attr not in ("pid", "port"):
+                field_val = field_val.lower()
+            if val not in field_val:
+                return False
+    return True
+
 
 class PortDataFetcher:
     def __init__(self) -> None:
@@ -1230,12 +1277,9 @@ class _FilterTask(QRunnable):
         if not query:
             visible = list(self._source)
         else:
-            visible = [
-                r for r in self._source
-                if query in r.pid or query in r.name.lower() or
-                   query in r.proto.lower() or query in r.addr.lower() or
-                   query in r.port or query in r.state.lower()
-            ]
+            # Parse the query once (outside the row loop) to keep filtering fast.
+            terms = _parse_query(query)
+            visible = [r for r in self._source if _row_matches_terms(r, terms)]
         if len(visible) > Config.MAX_ROWS:
             visible = visible[:Config.MAX_ROWS]
         # Sort — uses module-level cached key functions (Fix #18)
@@ -1945,12 +1989,12 @@ class PorkillWindow(QMainWindow):
         h.addSpacing(6)
 
         self._filter_edit = QLineEdit(bar)
-        self._filter_edit.setPlaceholderText("type to filter…")
+        self._filter_edit.setPlaceholderText("filter…   e.g.  nginx   port:8080   proto:udp")
         self._filter_edit.setFixedWidth(260)
         self._filter_edit.textChanged.connect(self._on_filter_changed)  # type: ignore[union-attr]
         h.addWidget(self._filter_edit)
 
-        hint = QLabel("name  ·  pid  ·  port  ·  proto  ·  state", bar)
+        hint = QLabel("substring, or  field:value  ·  pid name port proto addr state", bar)
         hint.setObjectName("hint")
         h.addWidget(hint)
         h.addStretch()
